@@ -1,5 +1,6 @@
 import argparse
 import json
+from operator import itemgetter
 from pathlib import Path
 from typing import TypedDict
 
@@ -23,47 +24,21 @@ def crear_referencia(epsg: int) -> osr.SpatialReference:
     return referencia
 
 
-def proyectar_punto(latitud: float, longitud: float) -> ogr.Geometry:
-    if not (-90 <= latitud <= 90 and -180 <= longitud <= 180):
-        raise ValueError("La latitud debe estar entre -90 y 90 y la longitud entre -180 y 180.")
-
-    # La CLI recibe latitud y longitud. OGR usa X = longitud e Y = latitud.
-    origen = crear_referencia(4326)
-    destino = crear_referencia(25830)
-    transformacion = osr.CoordinateTransformation(origen, destino)
-    este, norte, _ = transformacion.TransformPoint(longitud, latitud)
-
-    punto = ogr.Geometry(ogr.wkbPoint)
-    punto.AddPoint_2D(este, norte)
-    return punto
-
-
-def buscar_coincidencias(capa: ogr.Layer, punto: ogr.Geometry) -> list[Coincidencia]:
-    # El filtro espacial limita los candidatos. Intersects comprueba la geometría
-    # exacta e incluye un punto situado en el borde de uno o más polígonos.
-    coincidencias: list[Coincidencia] = []
-    capa.SetSpatialFilter(punto)
-    try:
-        for entidad in capa:
-            geometria = entidad.GetGeometryRef()
-            if geometria is not None and geometria.Intersects(punto):
-                coincidencias.append({
-                    "fid": entidad.GetFID(),
-                    "_mean": entidad.GetField(CAMPO_IRRADIACION),
-                })
-    finally:
-        capa.SetSpatialFilter(None)
-
-    return sorted(coincidencias, key=lambda coincidencia: coincidencia["fid"])
-
-
 def consultar_irradiacion(
     ruta_geopackage: Path, latitud: float, longitud: float
 ) -> list[Coincidencia]:
-    with gdal.ExceptionMgr(), ogr.ExceptionMgr(), osr.ExceptionMgr():
-        punto = proyectar_punto(latitud, longitud)
+    if not (-90 <= latitud <= 90 and -180 <= longitud <= 180):
+        raise ValueError("La latitud debe estar entre -90 y 90 y la longitud entre -180 y 180.")
 
-        # Abrir el GeoPackage sin permiso de escritura.
+    coincidencias: list[Coincidencia] = []
+    with gdal.ExceptionMgr(), ogr.ExceptionMgr(), osr.ExceptionMgr():
+        destino = crear_referencia(25830)
+        transformacion = osr.CoordinateTransformation(crear_referencia(4326), destino)
+        # OGR recibe longitud antes que latitud.
+        este, norte, _ = transformacion.TransformPoint(longitud, latitud)
+        punto = ogr.Geometry(ogr.wkbPoint)
+        punto.AddPoint_2D(este, norte)
+
         with gdal.OpenEx(
             str(ruta_geopackage), gdal.OF_VECTOR | gdal.OF_READONLY, allowed_drivers=["GPKG"]
         ) as datos:
@@ -71,12 +46,22 @@ def consultar_irradiacion(
             if capa is None:
                 raise ValueError(f"No se encontró la capa «{CAPA_IRRADIACION}».")
             referencia = capa.GetSpatialRef()
-            if referencia is None or not referencia.IsSame(crear_referencia(25830)):
+            if referencia is None or not referencia.IsSame(destino):
                 raise ValueError(f"La capa «{CAPA_IRRADIACION}» debe estar en EPSG:25830.")
             if capa.GetLayerDefn().GetFieldIndex(CAMPO_IRRADIACION) < 0:
                 raise ValueError(f"No se encontró el campo {CAMPO_IRRADIACION}.")
 
-            return buscar_coincidencias(capa, punto)
+            # El índice acota la búsqueda y la intersección incluye los bordes.
+            capa.SetSpatialFilter(punto)
+            for entidad in capa:
+                geometria = entidad.GetGeometryRef()
+                if geometria is not None and geometria.Intersects(punto):
+                    coincidencias.append({
+                        "fid": entidad.GetFID(),
+                        "_mean": entidad.GetField(CAMPO_IRRADIACION),
+                    })
+
+    return sorted(coincidencias, key=itemgetter("fid"))
 
 
 def main() -> None:
