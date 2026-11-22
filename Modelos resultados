@@ -3,3 +3,5 @@ loss: 0.1545 - salida_aptitud_accuracy: 0.9600 - salida_aptitud_loss: 0.1140 - s
 val_loss: 2.2399 - val_salida_aptitud_accuracy: 0.6991 - val_salida_aptitud_loss: 1.4480 - val_salida_prohibido_accuracy: 0.8436 - val_salida_prohibido_loss: 0.7933
 
 Modelo 2
+loss: 0.9207 - salida_aptitud_accuracy: 0.7458 - salida_aptitud_loss: 0.6005 - salida_prohibido_accuracy: 0.8645 - salida_prohibido_loss: 0.3202 -
+val_loss: 0.9255 - val_salida_aptitud_accuracy: 0.7471 - val_salida_aptitud_loss: 0.5983 - val_salida_prohibido_accuracy: 0.8625 - val_salida_prohibido_loss: 0.3269
