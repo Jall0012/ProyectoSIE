@@ -2,10 +2,10 @@
 
 Proyecto académico para evaluar si una zona es adecuada para instalar placas fotovoltaicas. El análisis empieza en Jaén y tiene dos modos.
 
-1. **Evaluación con capas geográficas.** El usuario introduce la latitud y la longitud de dos esquinas, la inferior izquierda (suroeste) y la superior derecha (noreste). Esos puntos delimitan un rectángulo. El sistema consulta las capas que ya tiene para esa zona y calcula su idoneidad con TOPSIS. Si faltan datos para evaluarla, informa de la falta de cobertura.
+1. **Evaluación con capas geográficas.** El usuario introduce la latitud y la longitud del centro en WGS84 y un radio en metros. El sistema proyecta el centro a `EPSG:25830` y construye una zona circular. El sistema consulta las capas que ya tiene para esa zona y calcula su idoneidad con TOPSIS. Si faltan datos para evaluarla, informa de la falta de cobertura.
 2. **Estimación con una imagen satelital.** Si el usuario solo dispone de una imagen del terreno y el sistema carece de capas para esa zona, puede subir el recorte. Una red neuronal convolucional (CNN) usa la imagen para estimar la idoneidad fotovoltaica.
 
-**Cómo se entrena la CNN.** Se ejecuta el primer modo en un bucle que recorre todas las zonas disponibles. Para cada zona con evaluación e imagen satelital, se empareja el recorte del mismo terreno con el resultado de TOPSIS. Esos pares de imagen y etiqueta forman el conjunto de entrenamiento del segundo modo.
+**Cómo se entrena la CNN.** Se ejecuta el primer modo en un bucle que recorre todas las zonas disponibles. Para cada zona con evaluación e imagen satelital, se empareja el recorte de la misma zona circular con el resultado de TOPSIS. Esos pares de imagen y etiqueta forman el conjunto de entrenamiento del segundo modo.
 
 ## Karpathy · Cómo programar
 
