@@ -76,13 +76,14 @@ function datosZona() {
     && Number.isFinite(valores.radio_m) && valores.radio_m > 0 ? valores : null;
 }
 
-function sincronizarMapa(recentrar = false) {
+function sincronizarMapa(recentrar = false, zoomDetalle = false) {
   const zona = datosZona();
   if (!zona || !mapa) return;
   const centro = [zona.latitud, zona.longitud];
   marcador.setLatLng(centro);
   circulo.setLatLng(centro).setRadius(zona.radio_m);
-  if (recentrar) mapa.panTo(centro);
+  if (zoomDetalle) mapa.setView(centro, Math.max(13, mapa.getZoom()));
+  else if (recentrar) mapa.panTo(centro);
 }
 
 function indicarCentro(posicion) {
@@ -153,12 +154,23 @@ function crearMapa() {
     vias: { color: "#78816e", weight: 0.85, opacity: 0.7 },
     principal: { color: "#aca27b", weight: 1.15, opacity: 0.77 },
   };
+  let vistaModificada = false;
+  const cambiosVista = "movestart click baselayerchange";
+  const registrarCambioVista = () => { vistaModificada = true; };
+  mapa.on(cambiosVista, registrarCambioVista);
   fetch("./mapa-jaen.geojson").then((respuesta) => {
     if (!respuesta.ok) throw new Error("Cartografía no disponible");
     return respuesta.json();
   }).then((datos) => {
-    L.geoJSON(datos, { style: (elemento) => estilos[elemento.properties.capa], interactive: false }).addTo(baseLocal);
-    for (const [lat, lon, nombre] of [[37.768, -3.79, "Jaén"], [37.774, -3.896, "Torredelcampo"], [37.738, -3.969, "Torredonjimeno"], [37.723, -3.853, "Jamilena"], [37.795, -3.705, "La Guardia de Jaén"]]) {
+    const cartografia = L.geoJSON(datos, { style: (elemento) => estilos[elemento.properties.capa], interactive: false });
+    if (!vistaModificada) mapa.fitBounds(cartografia.getBounds(), { padding: [16, 16], animate: false });
+    cartografia.addTo(baseLocal);
+    const poblaciones = [
+      [37.768, -3.79, "Jaén"], [38.038, -4.053, "Andújar"], [38.095, -3.636, "Linares"],
+      [38.011, -3.37, "Úbeda"], [37.91, -3.0, "Cazorla"],
+      [37.465, -3.924, "Alcalá la Real"], [38.298, -2.651, "Orcera"],
+    ];
+    for (const [lat, lon, nombre] of poblaciones) {
       L.tooltip({ permanent: true, direction: "center", className: "toponimo", interactive: false })
         .setLatLng([lat, lon]).setContent(nombre).addTo(baseLocal);
     }
@@ -166,6 +178,8 @@ function crearMapa() {
   }).catch(() => {
     falloCartografiaLocal = true;
     if (mapa.hasLayer(baseLocal)) notaMapa.textContent = errorLocal;
+  }).finally(() => {
+    mapa.off(cambiosVista, registrarCambioVista);
   });
 
   const icono = L.divIcon({ className: "centro-mapa", iconSize: [14, 14] });
@@ -178,7 +192,7 @@ function crearMapa() {
 
   mapa.on("click", (evento) => indicarCentro(evento.latlng));
   marcador.on("drag", () => indicarCentro(marcador.getLatLng()));
-  elementosZona.centrar.addEventListener("click", () => sincronizarMapa(true));
+  elementosZona.centrar.addEventListener("click", () => sincronizarMapa(true, true));
 }
 
 function indicarEstado(elemento, mensaje = "", error = false) {

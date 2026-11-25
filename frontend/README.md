@@ -38,7 +38,8 @@ y configura HTTPS para el dominio definitivo.
 
 ## Mapa y vista previa
 
-El mapa local usa curvas de nivel, carreteras y suelo urbano simplificados
+El mapa local abre con una vista provincial. Usa curvas de nivel cada 200 m,
+carreteras y suelo urbano simplificados
 de `CapasUsadas.gpkg` de la [release de datos](https://github.com/Jall0012/ProyectoSIE/releases/tag/datos).
 Las tres capas corresponden a los temas de relieve, usos del suelo y red de
 carreteras de [DERA](https://www.juntadeandalucia.es/institutodeestadisticaycartografia/dega/datos-espaciales-de-referencia-de-andalucia-dera/descarga-de-informacion),
@@ -49,6 +50,13 @@ La cartografía local es orientativa. La evaluación usa las capas completas
 del backend. El mapa general solicita teselas del
 [Mapa Base de España del IGN](https://www.ign.es/web/ide-area-nodo-ide-ign)
 sin clave de API y muestra su atribución en el mapa.
+
+Para regenerar la cartografía local, ejecuta desde la raíz del repositorio
+con el entorno del backend activo:
+
+```sh
+python scripts/generar_mapa_jaen.py /ruta/a/CapasUsadas.gpkg frontend/mapa-jaen.geojson
+```
 
 El navegador carga versiones fijas de Leaflet y GeoTIFF.js desde jsDelivr.
 La vista previa se calcula en el dispositivo. El TIFF original solo se envía
