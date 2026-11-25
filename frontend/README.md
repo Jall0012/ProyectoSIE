@@ -71,8 +71,10 @@ activo y acceso a la API del IGN:
 python -m scripts.generar_limites_jaen frontend/limites-jaen.geojson
 ```
 
-### Vista previa del recorte
+### Análisis con IA
 
 El navegador carga versiones fijas de Leaflet y GeoTIFF.js desde jsDelivr.
-La vista previa se calcula en el dispositivo. El TIFF original solo se envía
-a FastAPI al pulsar «Analizar imagen».
+«Analizar zona con IA» envía el centro y el radio a FastAPI, que devuelve el
+resultado y el GeoTIFF generado con imágenes del IGN. El navegador muestra la
+vista previa. Si se usa la subida manual, el archivo se envía al servidor al
+pulsar «Analizar imagen».

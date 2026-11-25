@@ -7,9 +7,9 @@
   <meta name="description" content="Evaluación del potencial fotovoltaico de terrenos en Jaén.">
   <title>ProyectoSIE · Aptitud fotovoltaica en Jaén</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="./estilos.css?v=ui-01">
+  <link rel="stylesheet" href="./estilos.css?v=ia-01-recorte">
   <script defer src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script defer src="./app.js?v=ui-01"></script>
+  <script defer src="./app.js?v=ia-01-recorte"></script>
 </head>
 <body>
   <header class="barra">
@@ -39,6 +39,22 @@
       </p>
       <p id="aviso-limite" class="pie-superficie" role="status" hidden>No se pudo cargar el límite provincial.</p>
       <p id="nota-mapa" class="pie-superficie">Pulsa en el mapa o arrastra el marcador para mover el centro.</p>
+      <form id="form-seleccion-zona" class="seleccion-zona" aria-label="Centro y radio del círculo">
+        <div class="coordenadas">
+          <label for="latitud">Latitud <input id="latitud" type="number" step="any" min="-90" max="90" value="37.78000" required></label>
+          <label for="longitud">Longitud <input id="longitud" type="number" step="any" min="-180" max="180" value="-3.79000" required></label>
+          <div>
+            <label for="radio">Radio</label>
+            <div class="entrada-unidad">
+              <input id="radio" type="number" step="any" min="0" value="250" required>
+              <span>m</span>
+            </div>
+          </div>
+        </div>
+        <input id="radio-deslizador" type="range" min="50" max="2000" step="10" value="250" aria-label="Ajustar radio en metros">
+        <div class="extremos" aria-hidden="true"><span>50 m</span><span>2.000 m</span></div>
+        <button type="submit" hidden>Evaluar con el modo seleccionado</button>
+      </form>
     </section>
 
     <div class="pestanas" role="tablist" aria-label="Modo de análisis">
@@ -48,21 +64,8 @@
 
     <section id="panel-zona" class="disposicion" role="tabpanel" aria-labelledby="tab-zona">
       <form id="form-zona" class="tarjeta controles">
-        <h2>Área de estudio</h2>
-        <p class="subtitulo">Centro en WGS84 y radio en metros.</p>
-        <div class="coordenadas">
-          <label for="latitud">Latitud <input id="latitud" type="number" step="any" min="-90" max="90" value="37.78000" required></label>
-          <label for="longitud">Longitud <input id="longitud" type="number" step="any" min="-180" max="180" value="-3.79000" required></label>
-        </div>
-        <div class="fila-radio">
-          <label for="radio">Radio</label>
-          <div class="entrada-unidad">
-            <input id="radio" type="number" step="any" min="0" value="250" required>
-            <span>m</span>
-          </div>
-        </div>
-        <input id="radio-deslizador" type="range" min="50" max="2000" step="10" value="250" aria-label="Ajustar radio en metros">
-        <div class="extremos" aria-hidden="true"><span>50 m</span><span>2.000 m</span></div>
+        <h2>Evaluación territorial</h2>
+        <p class="subtitulo">Consulta las capas geográficas para el círculo seleccionado.</p>
         <button class="primario" type="submit">Evaluar zona</button>
         <p id="estado-zona" class="estado" role="status"></p>
       </form>
@@ -73,27 +76,36 @@
     </section>
 
     <section id="panel-imagen" class="disposicion" role="tabpanel" aria-labelledby="tab-imagen" hidden>
-      <form id="form-imagen" class="tarjeta controles">
+      <div class="tarjeta controles">
         <h2>Recorte satelital</h2>
-        <p class="subtitulo">La estimación de IA corresponde al TIFF que subas.</p>
-        <div id="zona-archivo" class="zona-archivo">
-          <label class="cargar" for="archivo">Elegir archivo TIFF</label>
-          <input class="solo-lector" id="archivo" type="file" accept=".tif,.tiff,image/tiff" aria-describedby="ayuda-archivo">
-          <p id="ayuda-archivo">También puedes arrastrarlo aquí. Máximo 16 MiB.</p>
-        </div>
-        <p id="nombre-archivo" class="nombre-archivo" role="status" hidden></p>
+        <p class="subtitulo">Recorta imágenes del IGN para radios de 50 a 2.000 m. La estimación puede diferir de la obtenida con un TIFF original.</p>
+        <form id="form-zona-imagen">
+          <button class="primario" id="enviar-zona-imagen" type="submit">Analizar zona con IA</button>
+        </form>
+        <p id="estado-imagen" class="estado" role="status"></p>
         <figure class="vista-recorte">
           <div class="visor">
-            <p id="texto-visor" class="visor-vacio">Selecciona un TIFF para previsualizarlo.</p>
+            <p id="texto-visor" class="visor-vacio">La vista previa del recorte aparecerá aquí.</p>
             <canvas id="lienzo" role="img" aria-label="Vista previa del recorte satelital" hidden></canvas>
           </div>
-          <figcaption id="nota-vista">La vista previa se genera en el navegador.</figcaption>
+          <figcaption id="nota-vista" hidden></figcaption>
         </figure>
-        <button class="primario" id="enviar-imagen" type="submit" disabled>Analizar imagen</button>
-        <p id="estado-imagen" class="estado" role="status"></p>
-      </form>
+        <details class="subida-manual">
+          <summary>Subir un TIFF manualmente</summary>
+          <form id="form-imagen">
+            <div id="zona-archivo" class="zona-archivo">
+              <label class="cargar" for="archivo">Elegir archivo TIFF</label>
+              <input class="solo-lector" id="archivo" type="file" accept=".tif,.tiff,image/tiff" aria-describedby="ayuda-archivo">
+              <p id="ayuda-archivo">También puedes arrastrarlo aquí. Máximo 16 MiB.</p>
+            </div>
+            <p id="nombre-archivo" class="nombre-archivo" role="status" hidden></p>
+            <button class="primario" id="enviar-imagen" type="submit" disabled>Analizar imagen</button>
+          </form>
+        </details>
+      </div>
       <section id="resultado-imagen" class="tarjeta resultado" aria-live="polite" aria-atomic="true">
         <h2>Estimación CNN</h2>
+        <p id="origen-imagen" class="origen-imagen" hidden></p>
         <div id="detalle-imagen" class="detalle"><p>Las probabilidades del modelo aparecerán aquí.</p></div>
       </section>
     </section>

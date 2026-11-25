@@ -17,6 +17,8 @@ const elementosZona = {
 };
 const elementosImagen = {
   formulario: porId("form-imagen"),
+  formularioZona: porId("form-zona-imagen"),
+  enviarZona: porId("enviar-zona-imagen"),
   archivo: porId("archivo"),
   zonaArchivo: porId("zona-archivo"),
   nombre: porId("nombre-archivo"),
@@ -26,6 +28,7 @@ const elementosImagen = {
   nota: porId("nota-vista"),
   estado: porId("estado-imagen"),
   detalle: porId("detalle-imagen"),
+  origen: porId("origen-imagen"),
 };
 
 let mapa;
@@ -34,6 +37,7 @@ let circulo;
 let solicitudZona;
 let solicitudImagen;
 let archivoActual;
+let recorteAutomatico = false;
 let seleccionImagen = 0;
 let cargaGeoTiff;
 
@@ -88,8 +92,7 @@ function indicarCentro(posicion) {
   const centro = posicion.wrap();
   elementosZona.latitud.value = centro.lat.toFixed(5);
   elementosZona.longitud.value = centro.lng.toFixed(5);
-  limpiarZona();
-  sincronizarMapa();
+  actualizarZona();
 }
 
 function crearMapa() {
@@ -232,6 +235,12 @@ function limpiarZona() {
   mensajeInicial(elementosZona.detalle, "El resultado de la evaluación aparecerá aquí.");
 }
 
+function actualizarZona() {
+  limpiarZona();
+  if (recorteAutomatico) limpiarImagen();
+  sincronizarMapa();
+}
+
 function categoriaResultado(valor) {
   const titulo = document.createElement("div");
   titulo.className = "categoria";
@@ -268,31 +277,34 @@ async function pedirApi(ruta, opciones) {
   if (respuesta.ok) return respuesta.json();
 
   if (respuesta.status === 413) throw new Error("El archivo supera el tamaño máximo admitido.");
-  if (respuesta.status >= 500) throw new Error("El servicio no está disponible. Inténtalo de nuevo.");
   const datos = await respuesta.json().catch(() => null);
   const detalle = datos?.detail;
+  if (respuesta.status >= 500 && (respuesta.status !== 503 || typeof detalle !== "string")) {
+    throw new Error("El servicio no está disponible. Inténtalo de nuevo.");
+  }
   const mensaje = typeof detalle === "string" ? detalle : "Revisa los datos del formulario.";
   throw new Error(mensaje);
 }
 
 function configurarZona() {
   const { latitud, longitud, radio, deslizador, formulario, estado, detalle } = elementosZona;
+  porId("form-seleccion-zona").addEventListener("submit", (evento) => {
+    evento.preventDefault();
+    const modoDeterminista = porId("tab-zona").getAttribute("aria-selected") === "true";
+    const destino = modoDeterminista ? formulario : elementosImagen.formularioZona;
+    if (!destino.querySelector('button[type="submit"]').disabled) destino.requestSubmit();
+  });
   for (const entrada of [latitud, longitud]) {
-    entrada.addEventListener("input", () => {
-      limpiarZona();
-      sincronizarMapa();
-    });
+    entrada.addEventListener("input", actualizarZona);
     entrada.addEventListener("change", () => sincronizarMapa(true));
   }
   radio.addEventListener("input", () => {
-    limpiarZona();
     if (Number.isFinite(radio.valueAsNumber)) deslizador.value = radio.value;
-    sincronizarMapa();
+    actualizarZona();
   });
   deslizador.addEventListener("input", () => {
     radio.value = deslizador.value;
-    limpiarZona();
-    sincronizarMapa();
+    actualizarZona();
   });
   formulario.addEventListener("submit", async (evento) => {
     evento.preventDefault();
@@ -392,24 +404,34 @@ async function generarVistaPrevia(archivo, seleccion) {
   contexto.putImageData(cuadro, 0, 0);
   lienzo.hidden = false;
   texto.hidden = true;
+  nota.hidden = false;
   nota.textContent = `${ancho} × ${alto} píxeles · Vista previa local`;
 }
 
-async function seleccionarImagen(archivo) {
-  const { texto, lienzo, enviar, nota, nombre, detalle, estado } = elementosImagen;
-  const seleccion = ++seleccionImagen;
+function limpiarImagen() {
+  const { texto, lienzo, enviar, enviarZona, nota, nombre, detalle, estado, origen } = elementosImagen;
+  seleccionImagen++;
   solicitudImagen?.abort();
   solicitudImagen = undefined;
   archivoActual = undefined;
+  recorteAutomatico = false;
   lienzo.hidden = true;
   texto.hidden = false;
-  nota.textContent = "La vista previa se genera en el navegador.";
+  texto.textContent = "La vista previa del recorte aparecerá aquí.";
+  nota.hidden = true;
   nombre.hidden = true;
+  origen.hidden = true;
   enviar.disabled = true;
+  enviarZona.disabled = false;
   indicarEstado(estado);
   mensajeInicial(detalle, "Las probabilidades del modelo aparecerán aquí.");
-  texto.textContent = "Selecciona un TIFF para previsualizarlo.";
+}
+
+async function seleccionarImagen(archivo) {
+  const { texto, enviar, nota, nombre, estado } = elementosImagen;
+  limpiarImagen();
   if (!archivo) return;
+  const seleccion = seleccionImagen;
 
   if (archivo.size > maxBytesTiff) {
     indicarEstado(estado, "El TIFF supera el límite de 16 MiB.", true);
@@ -441,6 +463,7 @@ async function seleccionarImagen(archivo) {
       return;
     }
     texto.textContent = "Vista previa no disponible.";
+    nota.hidden = false;
     nota.textContent = "Puedes enviar el TIFF para que el servidor lo compruebe.";
   }
   if (seleccion === seleccionImagen) {
@@ -449,8 +472,74 @@ async function seleccionarImagen(archivo) {
   }
 }
 
+function mostrarResultadoImagen(resultado, fuente) {
+  const { detalle, origen } = elementosImagen;
+  origen.textContent = fuente;
+  origen.hidden = false;
+  detalle.replaceChildren(categoriaResultado(resultado.categoria));
+  for (const clase of ["Buenos", "Normales", "Malos"]) {
+    const probabilidad = resultado.probabilidades[clase];
+    detalle.append(metricaResultado(clase, probabilidad, porcentaje.format(probabilidad)));
+  }
+  const veto = metricaResultado("Probabilidad de veto", resultado.probabilidad_veto, porcentaje.format(resultado.probabilidad_veto));
+  veto.classList.add("veto");
+  detalle.append(veto);
+}
+
+async function analizarZonaImagen(evento) {
+  evento.preventDefault();
+  const { archivo, enviarZona, estado, texto } = elementosImagen;
+  const zona = datosZona();
+  if (!zona) {
+    indicarEstado(estado, "Introduce coordenadas válidas y un radio mayor que cero.", true);
+    return;
+  }
+  const { min, max } = elementosZona.deslizador;
+  if (zona.radio_m < Number(min) || zona.radio_m > Number(max)) {
+    indicarEstado(estado, "El recorte automático admite radios entre 50 y 2.000 m.", true);
+    return;
+  }
+  limpiarImagen();
+  archivo.value = "";
+  recorteAutomatico = true;
+  const seleccion = seleccionImagen;
+  const solicitud = new AbortController();
+  solicitudImagen = solicitud;
+  enviarZona.disabled = true;
+  sincronizarMapa(true);
+  texto.textContent = "Preparando el recorte…";
+  indicarEstado(estado, "Obteniendo la imagen del IGN y analizando el círculo…");
+  try {
+    const resultado = await pedirApi("analizar-zona-imagen", {
+      method: "POST", signal: solicitud.signal,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(zona),
+    });
+    if (solicitudImagen !== solicitud) return;
+    mostrarResultadoImagen(resultado, `Recorte automático experimental · IGN/PNOA CC BY 4.0 scne.es · Radio de ${numero.format(zona.radio_m)} m`);
+    indicarEstado(estado);
+    try {
+      const datos = Uint8Array.from(atob(resultado.recorte_tiff), (caracter) => caracter.charCodeAt(0));
+      await generarVistaPrevia(new Blob([datos], { type: "image/tiff" }), seleccion);
+    } catch {
+      if (solicitudImagen === solicitud) texto.textContent = "Vista previa no disponible.";
+    }
+  } catch (error) {
+    if (solicitudImagen === solicitud) {
+      texto.textContent = "La vista previa del recorte aparecerá aquí.";
+      indicarEstado(estado, error.message, true);
+    }
+  } finally {
+    if (solicitudImagen === solicitud) {
+      solicitudImagen = undefined;
+      enviarZona.disabled = false;
+    }
+  }
+}
+
 function configurarImagen() {
-  const { archivo, zonaArchivo, formulario, estado, detalle, enviar } = elementosImagen;
+  const { archivo, zonaArchivo, formulario, formularioZona, estado, enviar } = elementosImagen;
+  formularioZona.addEventListener("submit", analizarZonaImagen);
   archivo.addEventListener("change", () => seleccionarImagen(archivo.files[0]));
   zonaArchivo.addEventListener("dragover", (evento) => {
     if (!evento.dataTransfer.types.includes("Files")) return;
@@ -465,7 +554,7 @@ function configurarImagen() {
     zonaArchivo.dataset.arrastre = "false";
     archivo.value = "";
     if (evento.dataTransfer.files.length !== 1) {
-      seleccionarImagen();
+      limpiarImagen();
       indicarEstado(estado, "Selecciona un TIFF cada vez.", true);
       return;
     }
@@ -486,14 +575,7 @@ function configurarImagen() {
     try {
       const resultado = await pedirApi("analizar-imagen", { method: "POST", signal: solicitud.signal, body: datos });
       if (solicitudImagen !== solicitud) return;
-      detalle.replaceChildren(categoriaResultado(resultado.categoria));
-      for (const clase of ["Buenos", "Normales", "Malos"]) {
-        const probabilidad = resultado.probabilidades[clase];
-        detalle.append(metricaResultado(clase, probabilidad, porcentaje.format(probabilidad)));
-      }
-      const veto = metricaResultado("Probabilidad de veto", resultado.probabilidad_veto, porcentaje.format(resultado.probabilidad_veto));
-      veto.classList.add("veto");
-      detalle.append(veto);
+      mostrarResultadoImagen(resultado, archivoActual.name);
       indicarEstado(estado);
     } catch (error) {
       if (solicitudImagen === solicitud) indicarEstado(estado, error.message, true);
