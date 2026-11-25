@@ -8,6 +8,7 @@ python3.12 -m venv .venv
 .venv/bin/python -m pip install -r backend/requirements-backend.txt
 export PROYECTOSIE_GPKG=/workspace/ProyectoSIE-datos/CapasUsadas.gpkg
 export PROYECTOSIE_MODELO=/workspace/ProyectoSIE-datos/modelo_multitarea_solar.keras
+export PROYECTOSIE_SENTINEL=/ruta/al/mosaico_sur_COG.tif
 .venv/bin/python -m uvicorn backend.main:app
 ```
 
@@ -23,13 +24,13 @@ La documentación interactiva está en `http://127.0.0.1:8000/docs`.
 El centro se indica en WGS84 y el radio en metros. El TIFF admite una banda o
 al menos tres, hasta 16 MiB y 16 millones de píxeles.
 
-El análisis automático requiere conexión al
-[servicio de ortoimágenes del IGN](https://pnt.ign.es/visualizadores-y-servicios-web).
-El servidor obtiene teselas de zoom 14, las reproyecta a EPSG:25830 y recorta la
-imagen RGB del círculo a 10 m por píxel. El TIFF se genera en memoria y pasa
-por la misma inferencia que la subida manual. Su fuente y su fecha de captura
-pueden diferir de los recortes de entrenamiento.
+El análisis automático necesita el [mosaico Sentinel-2 sur de la release de datos](https://github.com/Jall0012/ProyectoSIE/releases/tag/datos).
+Configura `PROYECTOSIE_SENTINEL` con la ruta local al TIFF. El servidor lee solo
+la ventana del círculo en la cuadrícula original (EPSG:25830, RGB de 8 bits,
+10 m por píxel). El TIFF se genera en memoria y pasa por la misma inferencia
+que la subida manual.
 
-El servicio devuelve `422` si el radio de IA está fuera del intervalo admitido
-o si el círculo carece de imagen utilizable. Devuelve `503` si falla la
-descarga o el proveedor envía una respuesta inesperada.
+El modo automático devuelve `422` si el radio está fuera del intervalo
+admitido o si el círculo tiene cobertura incompleta. Devuelve `503` si el
+mosaico falta, es ilegible o tiene otro formato. Con cualquiera de estos
+errores, la subida manual y la evaluación TOPSIS siguen disponibles.

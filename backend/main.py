@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 from backend.inferencia import analizar_recorte, cargar_modelo, leer_recorte
 from backend.clasificador import CRS_PROYECTADO, cargar_capas_base, evaluar_circulo
-from backend.recorte_satelital import ErrorProveedorImagen, generar_recorte_satelital
+from backend.recorte_satelital import ErrorFuenteSentinel, generar_recorte_satelital
 
 MAX_BYTES_TIFF = 16 * 1024 * 1024
 
@@ -48,7 +48,9 @@ def ruta_configurada(variable: str) -> Path:
 async def cargar_recursos(aplicacion: FastAPI) -> AsyncIterator[None]:
     ruta_gpkg = ruta_configurada("PROYECTOSIE_GPKG")
     ruta_modelo = ruta_configurada("PROYECTOSIE_MODELO")
+    ruta_sentinel = os.environ.get("PROYECTOSIE_SENTINEL")
     aplicacion.state.ruta_gpkg = ruta_gpkg
+    aplicacion.state.ruta_sentinel = Path(ruta_sentinel) if ruta_sentinel else None
     aplicacion.state.capas = cargar_capas_base(ruta_gpkg, CRS_PROYECTADO, incluir_malla=False)
     aplicacion.state.modelo = cargar_modelo(ruta_modelo)
     yield
@@ -92,10 +94,12 @@ def analizar_imagen(archivo: UploadFile, solicitud: Request) -> ResultadoImagen:
 @app.post("/analizar-zona-imagen")
 def analizar_zona_imagen(zona: Zona, solicitud: Request) -> ResultadoZonaImagen:
     try:
-        contenido = generar_recorte_satelital(zona.latitud, zona.longitud, zona.radio_m)
+        contenido = generar_recorte_satelital(
+            zona.latitud, zona.longitud, zona.radio_m, solicitud.app.state.ruta_sentinel,
+        )
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
-    except ErrorProveedorImagen as error:
+    except ErrorFuenteSentinel as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
     resultado = analizar_tiff(contenido, solicitud)
     return ResultadoZonaImagen(

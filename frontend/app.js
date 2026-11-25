@@ -481,7 +481,7 @@ function mostrarResultadoImagen(resultado, fuente) {
     const probabilidad = resultado.probabilidades[clase];
     detalle.append(metricaResultado(clase, probabilidad, porcentaje.format(probabilidad)));
   }
-  const veto = metricaResultado("Probabilidad de veto", resultado.probabilidad_veto, porcentaje.format(resultado.probabilidad_veto));
+  const veto = metricaResultado("Veto estimado por IA", resultado.probabilidad_veto, porcentaje.format(resultado.probabilidad_veto));
   veto.classList.add("veto");
   detalle.append(veto);
 }
@@ -508,7 +508,7 @@ async function analizarZonaImagen(evento) {
   enviarZona.disabled = true;
   sincronizarMapa(true);
   texto.textContent = "Preparando el recorte…";
-  indicarEstado(estado, "Obteniendo la imagen del IGN y analizando el círculo…");
+  indicarEstado(estado, "Recortando la imagen Sentinel-2 y analizando el círculo…");
   try {
     const resultado = await pedirApi("analizar-zona-imagen", {
       method: "POST", signal: solicitud.signal,
@@ -516,7 +516,7 @@ async function analizarZonaImagen(evento) {
       body: JSON.stringify(zona),
     });
     if (solicitudImagen !== solicitud) return;
-    mostrarResultadoImagen(resultado, `Recorte automático experimental · IGN/PNOA CC BY 4.0 scne.es · Radio de ${numero.format(zona.radio_m)} m`);
+    mostrarResultadoImagen(resultado, `Copernicus Sentinel-2 · Mosaico PNT (IGN) · Radio de ${numero.format(zona.radio_m)} m`);
     indicarEstado(estado);
     try {
       const datos = Uint8Array.from(atob(resultado.recorte_tiff), (caracter) => caracter.charCodeAt(0));

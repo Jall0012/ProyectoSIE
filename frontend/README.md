@@ -10,6 +10,8 @@ frontend envía las peticiones a `/api/` en el mismo origen. Sigue las
 Adapta el dominio y la ruta de archivos en el bloque de Nginx. En el servidor,
 systemd puede arrancar Uvicorn con el entorno de Python y las variables
 `PROYECTOSIE_GPKG` y `PROYECTOSIE_MODELO` apuntando a los datos externos.
+Para activar el recorte automático, añade `PROYECTOSIE_SENTINEL` con la ruta
+al mosaico Sentinel-2.
 
 ```nginx
 server {
@@ -75,6 +77,6 @@ python -m scripts.generar_limites_jaen frontend/limites-jaen.geojson
 
 El navegador carga versiones fijas de Leaflet y GeoTIFF.js desde jsDelivr.
 «Analizar zona con IA» envía el centro y el radio a FastAPI, que devuelve el
-resultado y el GeoTIFF generado con imágenes del IGN. El navegador muestra la
-vista previa. Si se usa la subida manual, el archivo se envía al servidor al
-pulsar «Analizar imagen».
+resultado y el GeoTIFF recortado del mosaico Sentinel-2. El navegador muestra
+la vista previa. Si el mosaico falta o no cubre el círculo completo, se puede
+subir un TIFF y enviarlo al servidor al pulsar «Analizar imagen».
