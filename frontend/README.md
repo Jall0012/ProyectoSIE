@@ -1,4 +1,4 @@
-# Frontend de ProyectoSIE
+# Frontend de GeoSolar
 
 Interfaz estática en español. Sirve esta carpeta como raíz del sitio. El
 frontend envía las peticiones a `/api/` en el mismo origen. Sigue las
@@ -73,10 +73,10 @@ activo y acceso a la API del IGN:
 python -m scripts.generar_limites_jaen frontend/limites-jaen.geojson
 ```
 
-### Análisis con IA
+### Estimación satelital
 
 El navegador carga versiones fijas de Leaflet y GeoTIFF.js desde jsDelivr.
-«Analizar zona con IA» envía el centro y el radio a FastAPI, que devuelve el
+«Estimar aptitud con Sentinel-2» envía el centro y el radio a FastAPI, que devuelve el
 resultado y el GeoTIFF recortado del mosaico Sentinel-2. El navegador muestra
 la vista previa. Si el mosaico falta o no cubre el círculo completo, se puede
 subir un TIFF y enviarlo al servidor al pulsar «Analizar imagen».

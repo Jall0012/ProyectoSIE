@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101310">
   <meta name="description" content="Evaluación del potencial fotovoltaico de terrenos en Jaén.">
-  <title>ProyectoSIE · Aptitud fotovoltaica en Jaén</title>
+  <title>GeoSolar · Aptitud fotovoltaica en Jaén</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="./estilos.css?v=cerca-seleccion">
+  <link rel="stylesheet" href="./estilos.css?v=geosolar">
   <script defer src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
   <script defer src="./app.js?v=cerca-seleccion"></script>
 </head>
@@ -16,7 +16,7 @@
     <div class="contenedor barra-contenido">
       <a class="marca" href="./">
         <span class="marca-icono" aria-hidden="true">✳</span>
-        <span>Proyecto<span class="marca-sie">SIE</span></span>
+        <span>Geo<span class="marca-acento">Solar</span></span>
       </a>
       <span class="ubicacion">Jaén, Andalucía</span>
     </div>
@@ -58,8 +58,8 @@
     </section>
 
     <div class="pestanas" role="tablist" aria-label="Modo de análisis">
-      <button id="tab-zona" type="button" role="tab" aria-selected="true" aria-controls="panel-zona">Determinista (TOPSIS)</button>
-      <button id="tab-imagen" type="button" role="tab" aria-selected="false" aria-controls="panel-imagen" tabindex="-1">Con IA</button>
+      <button id="tab-zona" type="button" role="tab" aria-selected="true" aria-controls="panel-zona">Evaluación territorial</button>
+      <button id="tab-imagen" type="button" role="tab" aria-selected="false" aria-controls="panel-imagen" tabindex="-1">Estimación satelital</button>
     </div>
 
     <section id="panel-zona" class="disposicion" role="tabpanel" aria-labelledby="tab-zona">
@@ -82,7 +82,7 @@
             <option value="3" selected>3 km</option>
             <option value="5">5 km</option>
           </select>
-          <button id="buscar-alternativas" class="secundario" type="submit">Buscar alternativas cercanas</button>
+          <button id="buscar-alternativas" class="secundario" type="submit">Buscar zonas candidatas</button>
         </form>
         <p id="estado-alternativas" class="estado" role="status"></p>
         <ol id="lista-alternativas" class="lista-alternativas" role="list" aria-label="Zonas candidatas" hidden></ol>
@@ -94,7 +94,7 @@
         <h2>Recorte satelital</h2>
         <p class="subtitulo">Usa el mosaico Sentinel-2 para radios de 50 a 2.000 m cuando hay cobertura en todo el círculo.</p>
         <form id="form-zona-imagen">
-          <button class="primario" id="enviar-zona-imagen" type="submit">Analizar zona con IA</button>
+          <button class="primario" id="enviar-zona-imagen" type="submit">Estimar aptitud con Sentinel-2</button>
         </form>
         <p id="estado-imagen" class="estado" role="status"></p>
         <figure class="vista-recorte">
@@ -118,7 +118,7 @@
         </details>
       </div>
       <section id="resultado-imagen" class="tarjeta resultado" aria-live="polite" aria-atomic="true">
-        <h2>Estimación CNN</h2>
+        <h2>Resultado del análisis satelital</h2>
         <p id="origen-imagen" class="origen-imagen" hidden></p>
         <div id="detalle-imagen" class="detalle"><p>Las probabilidades del modelo aparecerán aquí.</p></div>
       </section>

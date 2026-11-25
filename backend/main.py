@@ -76,7 +76,7 @@ async def cargar_recursos(aplicacion: FastAPI) -> AsyncIterator[None]:
     yield
 
 
-app = FastAPI(title="ProyectoSIE", lifespan=cargar_recursos)
+app = FastAPI(title="GeoSolar", lifespan=cargar_recursos)
 
 
 @app.exception_handler(RequestValidationError)

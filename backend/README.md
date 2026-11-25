@@ -1,4 +1,4 @@
-# Backend de ProyectoSIE
+# Backend de GeoSolar
 
 Desde la raíz del repositorio, con Python 3.12 y los archivos de las releases
 guardados fuera del repositorio:
