@@ -58,6 +58,21 @@ con el entorno del backend activo:
 python scripts/generar_mapa_jaen.py /ruta/a/CapasUsadas.gpkg frontend/mapa-jaen.geojson
 ```
 
+### Límite provincial
+
+El recinto provincial de Jaén se obtiene de la colección de unidades
+administrativas de la [API del IGN](https://api-features.ign.es/collections/administrativeunit/items?nationalcode=34012300000).
+Se simplifica con una tolerancia de 25 m. Obra derivada de BDLJE CC-BY 4.0 ign.es.
+
+Para regenerar el límite, ejecuta desde la raíz con el entorno del backend
+activo y acceso a la API del IGN:
+
+```sh
+python -m scripts.generar_limites_jaen frontend/limites-jaen.geojson
+```
+
+### Vista previa del recorte
+
 El navegador carga versiones fijas de Leaflet y GeoTIFF.js desde jsDelivr.
 La vista previa se calcula en el dispositivo. El TIFF original solo se envía
 a FastAPI al pulsar «Analizar imagen».

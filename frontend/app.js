@@ -108,6 +108,7 @@ function crearMapa() {
     position: "bottomright", zoomInTitle: "Acercar", zoomOutTitle: "Alejar",
   }).addTo(mapa);
   L.control.scale({ imperial: false, position: "bottomleft" }).addTo(mapa);
+  mapa.createPane("limite-provincial").style.zIndex = "395";
 
   const baseLocal = L.layerGroup().addTo(mapa);
   mapa.attributionControl.setPrefix(false);
@@ -147,6 +148,7 @@ function crearMapa() {
     "Mapa general": baseGeneral,
     "Vista satelital": baseSatelital,
   }).addTo(mapa);
+  cargarLimiteProvincial();
 
   const estilos = {
     curvas: { color: "#64735a", weight: 0.8, opacity: 0.35 },
@@ -193,6 +195,24 @@ function crearMapa() {
   mapa.on("click", (evento) => indicarCentro(evento.latlng));
   marcador.on("drag", () => indicarCentro(marcador.getLatLng()));
   elementosZona.centrar.addEventListener("click", () => sincronizarMapa(true, true));
+}
+
+async function cargarLimiteProvincial() {
+  try {
+    const respuesta = await fetch("./limites-jaen.geojson?v=mapa-04-limite");
+    if (!respuesta.ok) throw new Error("Límite provincial no disponible");
+    const datos = await respuesta.json();
+    L.geoJSON(datos, {
+      pane: "limite-provincial",
+      interactive: false,
+      attribution: 'Obra derivada de <a href="https://centrodedescargas.cnig.es/CentroDescargas/limites-municipales-provinciales-autonomicos">BDLJE · IGN</a> CC BY 4.0',
+      filter: (elemento) => elemento.properties.capa === "provincia",
+      style: { className: "limite-mapa", color: "var(--limite-mapa)", dashArray: "6 4", weight: 2, fill: false },
+    }).addTo(mapa);
+    porId("leyenda-mapa").hidden = false;
+  } catch {
+    porId("aviso-limite").hidden = false;
+  }
 }
 
 function indicarEstado(elemento, mensaje = "", error = false) {

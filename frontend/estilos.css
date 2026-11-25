@@ -7,6 +7,7 @@
   --suave: #b7bdb0;
   --acento: #f4cb70;
   --negro-acento: #241a08;
+  --limite-mapa: #a6dcff;
   --error: #ffb4a7;
   --bien: #a9dba8;
   font-family: "Segoe UI", system-ui, sans-serif;
@@ -58,6 +59,9 @@ h2 { font-weight: 650; font-size: 1.13rem; letter-spacing: -.02em; }
 #mapa { isolation: isolate; background-color: #111510; background-image: linear-gradient(#2c3428 1px, transparent 1px), linear-gradient(90deg, #2c3428 1px, transparent 1px); background-size: 36px 36px; }
 .mapa-no-disponible { display: grid; place-items: center; text-align: center; padding: 1rem; color: var(--suave); }
 .pie-superficie { padding: .85rem 1.15rem; color: var(--suave); line-height: 1.45; font-size: .89rem; }
+.leyenda-mapa { display: flex; align-items: center; gap: .45rem; padding-bottom: 0; }
+.muestra-limite { width: 1rem; border-top: 2px dashed var(--limite-mapa); }
+.limite-mapa { filter: drop-shadow(0 0 1px #172c36); }
 .centro-mapa { border: 2px solid #1e180d; border-radius: 50%; background: var(--acento); box-shadow: 0 0 0 2px #f4cb70a0, 0 0 1.4rem #f4cb7090; }
 .leaflet-container a { color: #f8d787; }
 .leaflet-container .leaflet-control-attribution { background: #171a15ef; color: #e1dfd2; }

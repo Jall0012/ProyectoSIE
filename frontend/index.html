@@ -7,9 +7,9 @@
   <meta name="description" content="Evaluación del potencial fotovoltaico de terrenos en Jaén.">
   <title>ProyectoSIE · Aptitud fotovoltaica en Jaén</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="./estilos.css">
+  <link rel="stylesheet" href="./estilos.css?v=mapa-04-limite">
   <script defer src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script defer src="./app.js"></script>
+  <script defer src="./app.js?v=mapa-04-limite"></script>
 </head>
 <body>
   <header class="barra">
@@ -41,6 +41,10 @@
             <button id="centrar-mapa" class="secundario" type="button">Centrar zona</button>
           </div>
           <div id="mapa" aria-label="Mapa interactivo de Jaén"></div>
+          <p id="leyenda-mapa" class="leyenda-mapa pie-superficie" hidden>
+            <span class="muestra-limite" aria-hidden="true"></span>Límite provincial de Jaén
+          </p>
+          <p id="aviso-limite" class="pie-superficie" role="status" hidden>No se pudo cargar el límite provincial.</p>
           <p id="nota-mapa" class="pie-superficie">Pulsa en el mapa o arrastra el marcador para mover el centro.</p>
         </div>
         <div class="columna">
