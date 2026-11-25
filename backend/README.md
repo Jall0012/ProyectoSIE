@@ -28,8 +28,9 @@ el SQLite de Ubuntu no requiere `LD_PRELOAD`. Comprueba
 | `POST /analizar-imagen` | Campo multipart `archivo` con un TIFF | Categoría más probable, probabilidades de aptitud y probabilidad de veto |
 | `POST /analizar-zona-imagen` | JSON con `latitud`, `longitud` y `radio_m` entre 50 y 2000 | Resultado de IA y `recorte_tiff` con el TIFF utilizado, en base64 |
 
-El centro se indica en WGS84 y el radio en metros. El TIFF admite una banda o
-al menos tres, hasta 16 MiB y 16 millones de píxeles.
+El centro se indica en WGS84. El radio del círculo debe ser mayor que cero y
+como máximo de 2.000 m. El recorte automático requiere al menos 50 m. El TIFF
+admite una banda o al menos tres, hasta 16 MiB y 16 millones de píxeles.
 
 La búsqueda toma las zonas de `AreasEjemplo` por su centroide. Mide la distancia
 en línea recta y descarta el solape con superficie con el círculo seleccionado.

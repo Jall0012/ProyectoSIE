@@ -105,6 +105,12 @@ function datosZona() {
     && Number.isFinite(valores.radio_m) && valores.radio_m > 0 ? valores : null;
 }
 
+function mensajeZonaInvalida() {
+  return elementosZona.radio.validity.rangeOverflow
+    ? "El radio debe ser de 2.000 m como máximo."
+    : "Introduce coordenadas válidas y un radio mayor que cero.";
+}
+
 function sincronizarMapa(recentrar = false, zoomDetalle = false) {
   const zona = datosZona();
   if (!zona || !mapa) return;
@@ -340,7 +346,7 @@ function configurarZona() {
     evento.preventDefault();
     const zona = datosZona();
     if (!zona) {
-      indicarEstado(estado, "Introduce coordenadas válidas y un radio mayor que cero.", true);
+      indicarEstado(estado, mensajeZonaInvalida(), true);
       return;
     }
     sincronizarMapa(true);
@@ -452,7 +458,7 @@ function configurarAlternativas() {
     limpiarAlternativas();
     const zona = datosZona();
     if (!zona) {
-      indicarEstado(estado, "Introduce coordenadas válidas y un radio mayor que cero.", true);
+      indicarEstado(estado, mensajeZonaInvalida(), true);
       return;
     }
     const solicitud = new AbortController();
@@ -627,11 +633,10 @@ async function analizarZonaImagen(evento) {
   const { archivo, enviarZona, estado, texto } = elementosImagen;
   const zona = datosZona();
   if (!zona) {
-    indicarEstado(estado, "Introduce coordenadas válidas y un radio mayor que cero.", true);
+    indicarEstado(estado, mensajeZonaInvalida(), true);
     return;
   }
-  const { min, max } = elementosZona.deslizador;
-  if (zona.radio_m < Number(min) || zona.radio_m > Number(max)) {
+  if (zona.radio_m < Number(elementosZona.deslizador.min)) {
     indicarEstado(estado, "El recorte automático admite radios entre 50 y 2.000 m.", true);
     return;
   }

@@ -22,7 +22,7 @@ MAX_BYTES_TIFF = 16 * 1024 * 1024
 class Zona(BaseModel):
     latitud: float = Field(ge=-90, le=90, strict=True, allow_inf_nan=False)
     longitud: float = Field(ge=-180, le=180, strict=True, allow_inf_nan=False)
-    radio_m: float = Field(gt=0, strict=True, allow_inf_nan=False)
+    radio_m: float = Field(gt=0, le=2000, strict=True, allow_inf_nan=False)
 
 
 class ResultadoZona(BaseModel):
@@ -83,7 +83,12 @@ app = FastAPI(title="GeoSolar", lifespan=cargar_recursos)
 @app.exception_handler(RequestValidationError)
 async def error_validacion(_solicitud: Request, error: RequestValidationError) -> JSONResponse:
     # Los valores rechazados, como NaN, no siempre se pueden serializar como JSON.
-    detalle = [{"loc": fallo["loc"], "msg": fallo["msg"]} for fallo in error.errors()]
+    detalle = []
+    for fallo in error.errors():
+        mensaje = fallo["msg"]
+        if fallo["loc"] == ("body", "radio_m") and fallo["type"] == "less_than_equal":
+            mensaje = "El radio debe ser de 2.000 m como máximo."
+        detalle.append({"loc": fallo["loc"], "msg": mensaje})
     return JSONResponse(status_code=422, content={"detail": detalle})
 
 
