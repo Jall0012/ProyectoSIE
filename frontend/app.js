@@ -1,6 +1,8 @@
 const porId = (id) => document.getElementById(id);
 const numero = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 3 });
 const porcentaje = new Intl.NumberFormat("es-ES", { style: "percent", maximumFractionDigits: 1 });
+const kilometros = new Intl.NumberFormat("es-ES", { style: "unit", unit: "kilometer", maximumFractionDigits: 2 });
+const metros = new Intl.NumberFormat("es-ES", { style: "unit", unit: "meter", maximumFractionDigits: 0 });
 const centroInicial = [37.78, -3.79];
 const maxBytesTiff = 16 * 1024 * 1024;
 const maxPixelesTiff = 16_000_000;
@@ -14,6 +16,13 @@ const elementosZona = {
   centrar: porId("centrar-mapa"),
   estado: porId("estado-zona"),
   detalle: porId("detalle-zona"),
+};
+const elementosAlternativas = {
+  formulario: porId("form-alternativas"),
+  alcance: porId("alcance-alternativas"),
+  enviar: porId("buscar-alternativas"),
+  estado: porId("estado-alternativas"),
+  lista: porId("lista-alternativas"),
 };
 const elementosImagen = {
   formulario: porId("form-imagen"),
@@ -34,7 +43,9 @@ const elementosImagen = {
 let mapa;
 let marcador;
 let circulo;
+let capaAlternativas;
 let solicitudZona;
+let solicitudAlternativas;
 let solicitudImagen;
 let archivoActual;
 let recorteAutomatico = false;
@@ -49,6 +60,10 @@ function configurarPestanas() {
       elemento.setAttribute("aria-selected", String(activa));
       elemento.tabIndex = activa ? 0 : -1;
       porId(elemento.getAttribute("aria-controls")).hidden = !activa;
+    }
+    if (capaAlternativas) {
+      if (pestana.id === "tab-zona") capaAlternativas.addTo(mapa);
+      else capaAlternativas.remove();
     }
   }
 
@@ -192,6 +207,7 @@ function crearMapa() {
     radius: 250, color: "#ffce65", weight: 2, fillColor: "#f7cc72",
     fillOpacity: 0.32, interactive: false,
   }).addTo(mapa);
+  capaAlternativas = L.featureGroup().addTo(mapa);
 
   mapa.on("click", (evento) => indicarCentro(evento.latlng));
   marcador.on("drag", () => indicarCentro(marcador.getLatLng()));
@@ -237,6 +253,7 @@ function limpiarZona() {
 
 function actualizarZona() {
   limpiarZona();
+  limpiarAlternativas();
   if (recorteAutomatico) limpiarImagen();
   sincronizarMapa();
 }
@@ -276,6 +293,7 @@ async function pedirApi(ruta, opciones) {
   }
   if (respuesta.ok) return respuesta.json();
 
+  if (respuesta.status === 404) throw new Error("Esta operación no está disponible en la API.");
   if (respuesta.status === 413) throw new Error("El archivo supera el tamaño máximo admitido.");
   const datos = await respuesta.json().catch(() => null);
   const detalle = datos?.detail;
@@ -342,6 +360,111 @@ function configurarZona() {
     } finally {
       if (solicitudZona === solicitud) {
         solicitudZona = undefined;
+        enviar.disabled = false;
+      }
+    }
+  });
+}
+
+function limpiarAlternativas() {
+  const { enviar, estado, lista } = elementosAlternativas;
+  solicitudAlternativas?.abort();
+  solicitudAlternativas = undefined;
+  enviar.disabled = false;
+  indicarEstado(estado);
+  lista.hidden = true;
+  lista.replaceChildren();
+  capaAlternativas?.clearLayers();
+}
+
+function mostrarAlternativas(alternativas) {
+  const { lista } = elementosAlternativas;
+  const normal = { color: "#89ddc7", weight: 2, fillOpacity: 0.28 };
+  const destacada = { color: "#c6ffed", weight: 4, fillOpacity: 0.53 };
+  const fichas = [];
+
+  function seleccionar(actual) {
+    for (const ficha of fichas) {
+      const elegida = ficha === actual;
+      ficha.control.setAttribute("aria-pressed", String(elegida));
+      ficha.capa.setStyle(elegida ? destacada : normal);
+    }
+    actual.capa.bringToFront();
+  }
+
+  alternativas.forEach((alternativa, indice) => {
+    const item = document.createElement("li");
+    const control = document.createElement(mapa ? "button" : "div");
+    const titulo = document.createElement("strong");
+    const distancia = document.createElement("span");
+    const red = document.createElement("span");
+    const aptitud = alternativa.categoria === "Buenos" ? "Buena aptitud" : "Aptitud normal";
+    control.className = "ficha-alternativa";
+    titulo.textContent = `Alternativa ${indice + 1} · ${aptitud}`;
+    distancia.textContent = `${kilometros.format(alternativa.distancia_m / 1000)} en línea recta`;
+    red.textContent = `Red eléctrica a ${metros.format(alternativa.distancia_red_m)}`;
+    control.append(titulo, distancia, red);
+    item.append(control);
+    lista.append(item);
+
+    if (!capaAlternativas) return;
+    const capa = L.geoJSON(alternativa.geometria, {
+      style: normal, bubblingMouseEvents: false,
+    }).bindTooltip(String(indice + 1), {
+      permanent: true, direction: "center", className: "marca-alternativa",
+    }).addTo(capaAlternativas);
+    const ficha = { control, capa };
+    fichas.push(ficha);
+    control.type = "button";
+    control.setAttribute("aria-pressed", "false");
+    control.addEventListener("click", () => {
+      seleccionar(ficha);
+      mapa.fitBounds(capa.getBounds(), { padding: [30, 30], maxZoom: 16 });
+      porId("mapa").scrollIntoView({ block: "nearest" });
+    });
+    capa.on("click", () => seleccionar(ficha));
+  });
+  lista.hidden = false;
+  if (mapa?.hasLayer(capaAlternativas)) {
+    const limites = capaAlternativas.getBounds().extend(circulo.getBounds());
+    mapa.fitBounds(limites, { padding: [24, 24], maxZoom: 15 });
+  }
+}
+
+function configurarAlternativas() {
+  const { formulario, alcance, enviar, estado } = elementosAlternativas;
+  alcance.addEventListener("change", limpiarAlternativas);
+  formulario.addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    limpiarAlternativas();
+    const zona = datosZona();
+    if (!zona) {
+      indicarEstado(estado, "Introduce coordenadas válidas y un radio mayor que cero.", true);
+      return;
+    }
+    const solicitud = new AbortController();
+    solicitudAlternativas = solicitud;
+    enviar.disabled = true;
+    indicarEstado(estado, "Buscando alternativas cercanas…");
+    try {
+      const { alternativas } = await pedirApi("buscar-alternativas", {
+        method: "POST", signal: solicitud.signal,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...zona, alcance_km: Number(alcance.value) }),
+      });
+      if (solicitudAlternativas !== solicitud) return;
+      if (alternativas.length === 0) {
+        indicarEstado(estado, "No se encontraron zonas recomendables en ese alcance.");
+        return;
+      }
+      mostrarAlternativas(alternativas);
+      const total = alternativas.length;
+      indicarEstado(estado, total === 1 ? "1 alternativa encontrada." : `${total} alternativas encontradas.`);
+    } catch (error) {
+      if (solicitudAlternativas === solicitud) indicarEstado(estado, error.message, true);
+    } finally {
+      if (solicitudAlternativas === solicitud) {
+        solicitudAlternativas = undefined;
         enviar.disabled = false;
       }
     }
@@ -590,5 +713,6 @@ function configurarImagen() {
 
 configurarPestanas();
 configurarZona();
+configurarAlternativas();
 configurarImagen();
 crearMapa();

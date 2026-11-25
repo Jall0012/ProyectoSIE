@@ -7,9 +7,9 @@
   <meta name="description" content="Evaluación del potencial fotovoltaico de terrenos en Jaén.">
   <title>ProyectoSIE · Aptitud fotovoltaica en Jaén</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="./estilos.css?v=ia-01-recorte">
+  <link rel="stylesheet" href="./estilos.css?v=cerca-02">
   <script defer src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script defer src="./app.js?v=ia-02-sentinel"></script>
+  <script defer src="./app.js?v=cerca-02"></script>
 </head>
 <body>
   <header class="barra">
@@ -72,6 +72,20 @@
       <section id="resultado-zona" class="tarjeta resultado" aria-live="polite" aria-atomic="true">
         <h2>Evaluación TOPSIS</h2>
         <div id="detalle-zona" class="detalle"><p>El resultado de la evaluación aparecerá aquí.</p></div>
+      </section>
+      <section class="tarjeta controles alternativas" aria-labelledby="titulo-alternativas">
+        <h2 id="titulo-alternativas">Alternativas cercanas</h2>
+        <form id="form-alternativas">
+          <label for="alcance-alternativas">Alcance de búsqueda</label>
+          <select id="alcance-alternativas">
+            <option value="1">1 km</option>
+            <option value="3" selected>3 km</option>
+            <option value="5">5 km</option>
+          </select>
+          <button id="buscar-alternativas" class="secundario" type="submit">Buscar alternativas cercanas</button>
+        </form>
+        <p id="estado-alternativas" class="estado" role="status"></p>
+        <ol id="lista-alternativas" class="lista-alternativas" role="list" aria-label="Zonas candidatas" hidden></ol>
       </section>
     </section>
 
