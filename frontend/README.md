@@ -46,8 +46,9 @@ publicados por el Instituto de Estadística y Cartografía de Andalucía bajo
 [CC BY 4.0](https://www.juntadeandalucia.es/datosabiertos/portal/dataset/datos-espaciales-de-referencia-andalucia-dera).
 El IGN es la fuente de origen de las capas de usos del suelo y carretera.
 La cartografía local es orientativa. La evaluación usa las capas completas
-del backend. El mapa general opcional solicita teselas de CARTO y
-OpenStreetMap y muestra sus créditos en el mapa.
+del backend. El mapa general solicita teselas del
+[Mapa Base de España del IGN](https://www.ign.es/web/ide-area-nodo-ide-ign)
+sin clave de API y muestra su atribución en el mapa.
 
 El navegador carga versiones fijas de Leaflet y GeoTIFF.js desde jsDelivr.
 La vista previa se calcula en el dispositivo. El TIFF original solo se envía

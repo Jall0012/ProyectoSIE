@@ -115,9 +115,11 @@ function crearMapa() {
   baseLocal.on("remove", () => mapa.attributionControl.removeAttribution(atribucionLocal));
   mapa.attributionControl.addAttribution(atribucionLocal);
 
-  const baseGeneral = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    maxNativeZoom: 18,
+  const teselasIgn = "https://www.ign.es/wmts/ign-base?SERVICE=WMTS&VERSION=1.0.0&REQUEST=GetTile"
+    + "&LAYER=IGNBaseTodo&STYLE=default&FORMAT=image/jpeg&TILEMATRIXSET=GoogleMapsCompatible"
+    + "&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}";
+  const baseGeneral = L.tileLayer(teselasIgn, {
+    attribution: 'Mapa Base de España · IGN <a href="https://www.scne.es/">CC BY 4.0 scne.es</a>',
   });
   const baseSatelital = L.tileLayer("https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/{z}/{x}/{-y}.jpeg", {
     attribution: 'IGN · PNOA <a href="https://www.scne.es/">CC BY 4.0 scne.es</a> · Copernicus Sentinel-2',
