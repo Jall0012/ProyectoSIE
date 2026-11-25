@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101310">
+  <meta name="description" content="Evaluación del potencial fotovoltaico de terrenos en Jaén.">
+  <title>ProyectoSIE · Aptitud fotovoltaica en Jaén</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="./estilos.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <header class="barra">
+    <div class="contenedor barra-contenido">
+      <a class="marca" href="./">
+        <span class="marca-icono" aria-hidden="true">✳</span>
+        <span>Proyecto<span class="marca-sie">SIE</span></span>
+      </a>
+      <span class="ubicacion">Jaén, Andalucía</span>
+    </div>
+  </header>
+
+  <main class="contenedor">
+    <section class="introduccion" aria-labelledby="titulo">
+      <h1 id="titulo">Aptitud <em>fotovoltaica</em></h1>
+      <p>Evalúa un terreno en Jaén o estima su aptitud con un recorte satelital.</p>
+    </section>
+
+    <div class="pestanas" role="tablist" aria-label="Modo de análisis">
+      <button id="tab-zona" type="button" role="tab" aria-selected="true" aria-controls="panel-zona"><span aria-hidden="true">◎</span> Evaluar zona</button>
+      <button id="tab-imagen" type="button" role="tab" aria-selected="false" aria-controls="panel-imagen" tabindex="-1"><span aria-hidden="true">▧</span> Analizar imagen</button>
+    </div>
+
+    <section id="panel-zona" class="panel" role="tabpanel" aria-labelledby="tab-zona">
+      <div class="disposicion">
+        <div class="tarjeta superficie">
+          <div class="cabecera-superficie">
+            <h2>Mapa de Jaén</h2>
+            <button id="centrar-mapa" class="secundario" type="button">Centrar zona</button>
+          </div>
+          <div id="mapa" aria-label="Mapa interactivo de Jaén"></div>
+          <p id="nota-mapa" class="pie-superficie">Pulsa en el mapa o arrastra el marcador para mover el centro.</p>
+        </div>
+        <div class="columna">
+          <form id="form-zona" class="tarjeta controles">
+            <h2>Área de estudio</h2>
+            <p class="subtitulo">Centro en WGS84 y radio en metros.</p>
+
+            <div class="coordenadas">
+              <label for="latitud">Latitud <input id="latitud" type="number" step="any" min="-90" max="90" value="37.78000" required></label>
+              <label for="longitud">Longitud <input id="longitud" type="number" step="any" min="-180" max="180" value="-3.79000" required></label>
+            </div>
+            <div class="fila-radio">
+              <label for="radio">Radio</label>
+              <div class="entrada-unidad">
+                <input id="radio" type="number" step="any" min="0" value="250" required>
+                <span>m</span>
+              </div>
+            </div>
+            <input id="radio-deslizador" type="range" min="50" max="2000" step="10" value="250" aria-label="Ajustar radio en metros">
+            <div class="extremos" aria-hidden="true"><span>50 m</span><span>2.000 m</span></div>
+            <button class="primario" type="submit">Evaluar zona</button>
+            <p id="estado-zona" class="estado" role="status"></p>
+          </form>
+          <section id="resultado-zona" class="tarjeta resultado" aria-live="polite" aria-atomic="true">
+            <h2>Evaluación TOPSIS</h2>
+            <div id="detalle-zona" class="detalle"><p>El resultado de la evaluación aparecerá aquí.</p></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section id="panel-imagen" class="panel" role="tabpanel" aria-labelledby="tab-imagen" hidden>
+      <div class="disposicion">
+        <div class="tarjeta superficie">
+          <div class="cabecera-superficie"><h2>Vista previa</h2></div>
+          <div class="visor">
+            <div id="visor-vacio" class="visor-vacio">
+              <span aria-hidden="true">▧</span>
+              <p id="texto-visor">Selecciona un TIFF para previsualizarlo.</p>
+            </div>
+            <canvas id="lienzo" role="img" aria-label="Vista previa del recorte satelital" hidden></canvas>
+          </div>
+          <p id="nota-vista" class="pie-superficie">La vista previa se genera en el navegador.</p>
+        </div>
+        <div class="columna">
+          <form id="form-imagen" class="tarjeta controles">
+            <h2>Recorte satelital</h2>
+            <p class="subtitulo">Sube un TIFF para obtener una estimación de la CNN.</p>
+            <div id="zona-archivo" class="zona-archivo">
+              <label class="cargar" for="archivo">Elegir archivo TIFF</label>
+              <input class="solo-lector" id="archivo" type="file" accept=".tif,.tiff,image/tiff" aria-describedby="ayuda-archivo">
+              <p id="ayuda-archivo">También puedes arrastrarlo aquí. Máximo 16 MiB.</p>
+            </div>
+            <p id="nombre-archivo" class="nombre-archivo" role="status" hidden></p>
+            <button class="primario" id="enviar-imagen" type="submit" disabled>Analizar imagen</button>
+            <p id="estado-imagen" class="estado" role="status"></p>
+          </form>
+          <section id="resultado-imagen" class="tarjeta resultado" aria-live="polite" aria-atomic="true">
+            <h2>Estimación CNN</h2>
+            <div id="detalle-imagen" class="detalle"><p>Las probabilidades del modelo aparecerán aquí.</p></div>
+          </section>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="contenedor pie">
+    <span>Proyecto 19 · Sistemas de Información Espacial</span>
+  </footer>
+</body>
+</html>
