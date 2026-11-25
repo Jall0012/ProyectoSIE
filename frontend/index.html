@@ -7,9 +7,9 @@
   <meta name="description" content="Evaluación del potencial fotovoltaico de terrenos en Jaén.">
   <title>ProyectoSIE · Aptitud fotovoltaica en Jaén</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="./estilos.css?v=cerca-02">
+  <link rel="stylesheet" href="./estilos.css?v=cerca-seleccion">
   <script defer src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script defer src="./app.js?v=cerca-02"></script>
+  <script defer src="./app.js?v=cerca-seleccion"></script>
 </head>
 <body>
   <header class="barra">
@@ -51,7 +51,7 @@
             </div>
           </div>
         </div>
-        <input id="radio-deslizador" type="range" min="50" max="2000" step="10" value="250" aria-label="Ajustar radio en metros">
+        <input id="radio-deslizador" type="range" min="50" max="2000" step="1" value="250" aria-label="Ajustar radio en metros">
         <div class="extremos" aria-hidden="true"><span>50 m</span><span>2.000 m</span></div>
         <button type="submit" hidden>Evaluar con el modo seleccionado</button>
       </form>

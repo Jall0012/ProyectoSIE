@@ -180,9 +180,16 @@ def buscar_zonas_cercanas(
         candidatas, {**capas_base, "malla": malla}, excluir_vetos_de_referencia=True,
     )
     recomendables = resultados.loc[resultados["Aptitud_Solar"].isin(("Buenos", "Normales"))]
-    return recomendables.sort_values(
+    seleccionadas = recomendables.sort_values(
         ["Puntuacion_TOPSIS", "distancia_m", "id_zona"], ascending=[False, True, True],
-    ).head(3).to_crs("EPSG:4326")
+    ).head(3).copy()
+    centros = seleccionadas.geometry.centroid.to_crs("EPSG:4326")
+    limites = seleccionadas.geometry.bounds
+    seleccionadas["latitud"] = centros.y
+    seleccionadas["longitud"] = centros.x
+    # Las zonas circulares de AreasEjemplo tienen un radio entero en metros.
+    seleccionadas["radio_m"] = ((limites["maxx"] - limites["minx"]) / 2).round()
+    return seleccionadas.to_crs("EPSG:4326")
 
 
 def solapes_con_superficie(

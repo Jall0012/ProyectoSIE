@@ -377,28 +377,27 @@ function limpiarAlternativas() {
   capaAlternativas?.clearLayers();
 }
 
+function seleccionarAlternativa(alternativa) {
+  const { latitud, longitud, radio, deslizador } = elementosZona;
+  latitud.value = alternativa.latitud;
+  longitud.value = alternativa.longitud;
+  radio.value = alternativa.radio_m;
+  deslizador.value = radio.value;
+  actualizarZona();
+  mapa?.fitBounds(circulo.getBounds(), { padding: [30, 30], maxZoom: 16 });
+  indicarEstado(elementosAlternativas.estado, "Zona alternativa seleccionada.");
+}
+
 function mostrarAlternativas(alternativas) {
   const { lista } = elementosAlternativas;
-  const normal = { color: "#89ddc7", weight: 2, fillOpacity: 0.28 };
-  const destacada = { color: "#c6ffed", weight: 4, fillOpacity: 0.53 };
-  const fichas = [];
-
-  function seleccionar(actual) {
-    for (const ficha of fichas) {
-      const elegida = ficha === actual;
-      ficha.control.setAttribute("aria-pressed", String(elegida));
-      ficha.capa.setStyle(elegida ? destacada : normal);
-    }
-    actual.capa.bringToFront();
-  }
-
   alternativas.forEach((alternativa, indice) => {
     const item = document.createElement("li");
-    const control = document.createElement(mapa ? "button" : "div");
+    const control = document.createElement("button");
     const titulo = document.createElement("strong");
     const distancia = document.createElement("span");
     const red = document.createElement("span");
     const aptitud = alternativa.categoria === "Buenos" ? "Buena aptitud" : "Aptitud normal";
+    control.type = "button";
     control.className = "ficha-alternativa";
     titulo.textContent = `Alternativa ${indice + 1} · ${aptitud}`;
     distancia.textContent = `${kilometros.format(alternativa.distancia_m / 1000)} en línea recta`;
@@ -407,22 +406,20 @@ function mostrarAlternativas(alternativas) {
     item.append(control);
     lista.append(item);
 
+    control.addEventListener("click", () => {
+      const teniaFoco = document.activeElement === control;
+      seleccionarAlternativa(alternativa);
+      if (teniaFoco) {
+        elementosZona.formulario.querySelector('button[type="submit"]').focus({ preventScroll: true });
+      }
+    });
     if (!capaAlternativas) return;
     const capa = L.geoJSON(alternativa.geometria, {
-      style: normal, bubblingMouseEvents: false,
+      style: { color: "#89ddc7", weight: 2, fillOpacity: 0.28 }, bubblingMouseEvents: false,
     }).bindTooltip(String(indice + 1), {
       permanent: true, direction: "center", className: "marca-alternativa",
     }).addTo(capaAlternativas);
-    const ficha = { control, capa };
-    fichas.push(ficha);
-    control.type = "button";
-    control.setAttribute("aria-pressed", "false");
-    control.addEventListener("click", () => {
-      seleccionar(ficha);
-      mapa.fitBounds(capa.getBounds(), { padding: [30, 30], maxZoom: 16 });
-      porId("mapa").scrollIntoView({ block: "nearest" });
-    });
-    capa.on("click", () => seleccionar(ficha));
+    capa.on("click", () => seleccionarAlternativa(alternativa));
   });
   lista.hidden = false;
   if (mapa?.hasLayer(capaAlternativas)) {

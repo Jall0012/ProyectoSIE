@@ -28,6 +28,7 @@ al menos tres, hasta 16 MiB y 16 millones de píxeles.
 La búsqueda toma las zonas de `AreasEjemplo` por su centroide. Mide la distancia
 en línea recta y descarta el solape con superficie con el círculo seleccionado.
 Cada alternativa incluye el FID como `id`, `geometria` GeoJSON en WGS84,
+el centro (`latitud`, `longitud`) en WGS84 y su `radio_m` en metros,
 `distancia_m`, `categoria`, `puntuacion`, `distancia_red_m` e `irradiacion_media`.
 La clasificación TOPSIS emplea una referencia común a las zonas de la búsqueda
 con datos suficientes y sin veto. Devuelve las zonas «Buenas» o «Normales» por

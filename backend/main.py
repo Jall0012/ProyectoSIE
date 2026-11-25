@@ -33,7 +33,7 @@ class BusquedaCercana(Zona):
     alcance_km: int = Field(default=3, strict=True, description="Alcance de 1, 3 o 5 km")
 
 
-class Alternativa(BaseModel):
+class Alternativa(Zona):
     id: int
     geometria: dict[str, Any]
     distancia_m: float
@@ -115,6 +115,7 @@ def buscar_alternativas(busqueda: BusquedaCercana, solicitud: Request) -> Result
         raise HTTPException(status_code=422, detail=str(error)) from error
     return ResultadoBusqueda(alternativas=[
         Alternativa(
+            latitud=zona.latitud, longitud=zona.longitud, radio_m=zona.radio_m,
             id=zona.id_zona, geometria=mapping(zona.geometry), distancia_m=zona.distancia_m,
             categoria=zona.Aptitud_Solar, puntuacion=zona.Puntuacion_TOPSIS,
             distancia_red_m=zona.dist_red_electrica_m, irradiacion_media=zona.irradiacion_media,
