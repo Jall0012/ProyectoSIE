@@ -7,7 +7,7 @@ import numpy as np
 from pyproj import Transformer
 from shapely import from_wkb
 from shapely.errors import GEOSException
-from shapely.geometry import Point
+from shapely.geometry import Point, Polygon
 
 # ==========================================
 # 1. CONFIGURACIÓN Y CARGA DE CAPAS BASE
@@ -101,14 +101,8 @@ def consultar_malla(
     )
 
 
-def evaluar_circulo(
-    latitud: float,
-    longitud: float,
-    radio_m: float,
-    ruta_gpkg: str | Path,
-    capas_base: dict[str, gpd.GeoDataFrame],
-) -> tuple[str, float | None]:
-    """Evalúa un círculo en metros a partir de un centro WGS84."""
+def construir_circulo(latitud: float, longitud: float, radio_m: float) -> tuple[Point, Polygon] | None:
+    """Proyecta un centro WGS84 y construye su círculo en metros."""
     if not (-90 <= latitud <= 90 and -180 <= longitud <= 180):
         raise ValueError("El centro debe tener coordenadas WGS84 válidas.")
     if not np.isfinite(radio_m) or radio_m <= 0:
@@ -117,20 +111,78 @@ def evaluar_circulo(
     transformar = Transformer.from_crs("EPSG:4326", CRS_PROYECTADO, always_xy=True)
     este, norte = transformar.transform(longitud, latitud)
     if not np.isfinite((este, norte)).all():
-        return "Sin datos", None
+        return None
 
+    centro = Point(este, norte)
     try:
-        circulo = Point(este, norte).buffer(radio_m)
+        circulo = centro.buffer(radio_m)
     except GEOSException as error:
         raise ValueError("El radio no permite construir un círculo en este centro.") from error
     if circulo.is_empty or not np.isfinite(circulo.area) or circulo.area <= 0:
         raise ValueError("El radio no permite construir un círculo en este centro.")
+    return centro, circulo
+
+
+def evaluar_circulo(
+    latitud: float,
+    longitud: float,
+    radio_m: float,
+    ruta_gpkg: str | Path,
+    capas_base: dict[str, gpd.GeoDataFrame],
+) -> tuple[str, float | None]:
+    """Evalúa un círculo en metros a partir de un centro WGS84."""
+    zona_proyectada = construir_circulo(latitud, longitud, radio_m)
+    if zona_proyectada is None:
+        return "Sin datos", None
+    _, circulo = zona_proyectada
 
     malla = consultar_malla(ruta_gpkg, circulo.bounds)
     zona = gpd.GeoDataFrame(geometry=[circulo], crs=CRS_PROYECTADO)
     resultado = clasificar_area(zona, {**capas_base, "malla": malla}).iloc[0]
     puntuacion = resultado["Puntuacion_TOPSIS"]
     return str(resultado["Aptitud_Solar"]), float(puntuacion) if np.isfinite(puntuacion) else None
+
+
+def buscar_zonas_cercanas(
+    latitud: float,
+    longitud: float,
+    radio_m: float,
+    alcance_km: int,
+    ruta_gpkg: str | Path,
+    capas_base: dict[str, gpd.GeoDataFrame],
+) -> gpd.GeoDataFrame:
+    """Ordena hasta tres zonas viables con una referencia TOPSIS común."""
+    if alcance_km not in (1, 3, 5):
+        raise ValueError("El alcance debe ser de 1, 3 o 5 km.")
+    zona_proyectada = construir_circulo(latitud, longitud, radio_m)
+    if zona_proyectada is None:
+        return gpd.GeoDataFrame()
+    centro, circulo = zona_proyectada
+    alcance_m = alcance_km * 1000
+    x, y = centro.x, centro.y
+    zonas = gpd.read_file(
+        ruta_gpkg, layer="AreasEjemplo", engine="pyogrio", columns=[], fid_as_index=True,
+        bbox=(x - alcance_m, y - alcance_m, x + alcance_m, y + alcance_m),
+    )
+    if zonas.crs != CRS_PROYECTADO:
+        raise ValueError(f"La capa AreasEjemplo debe estar en {CRS_PROYECTADO}.")
+
+    zonas["id_zona"] = zonas.index
+    zonas["distancia_m"] = zonas.geometry.centroid.distance(centro)
+    cercanas = zonas.loc[zonas["distancia_m"] <= alcance_m]
+    candidatas = cercanas.loc[cercanas.geometry.intersection(circulo).area == 0]
+    if candidatas.empty:
+        return candidatas
+
+    min_x, min_y, max_x, max_y = candidatas.total_bounds
+    malla = consultar_malla(ruta_gpkg, (min_x, min_y, max_x, max_y))
+    resultados = clasificar_area(
+        candidatas, {**capas_base, "malla": malla}, excluir_vetos_de_referencia=True,
+    )
+    recomendables = resultados.loc[resultados["Aptitud_Solar"].isin(("Buenos", "Normales"))]
+    return recomendables.sort_values(
+        ["Puntuacion_TOPSIS", "distancia_m", "id_zona"], ascending=[False, True, True],
+    ).head(3).to_crs("EPSG:4326")
 
 
 def solapes_con_superficie(
@@ -150,6 +202,8 @@ def clasificar_area(
     gdf_area: gpd.GeoDataFrame,
     capas_base: dict[str, gpd.GeoDataFrame],
     crs: str = CRS_PROYECTADO,
+    *,
+    excluir_vetos_de_referencia: bool = False,
 ) -> gpd.GeoDataFrame:
     """
     Recibe un GeoDataFrame con 1 (o varias) áreas, calcula las variables espaciales
@@ -195,13 +249,16 @@ def clasificar_area(
         'irradiacion_media'
     ]
     evaluables = np.isfinite(area[columnas_criterios + ["valorSuelo"]]).all(axis=1)
+    vetadas = evaluables & area["en_red_natura"] & area["valorSuelo"].isin((2, 3))
     area["Aptitud_Solar"] = "Sin datos"
     area["Puntuacion_TOPSIS"] = np.nan
-    if not evaluables.any():
+    area.loc[vetadas, "Aptitud_Solar"] = "Lugar prohibido"
+    area.loc[vetadas, "Puntuacion_TOPSIS"] = 0.0
+    referencia = evaluables & ~vetadas if excluir_vetos_de_referencia else evaluables
+    if not referencia.any():
         return area
-    alternativas = area.loc[evaluables]
+    alternativas = area.loc[referencia]
     Aclasificar = alternativas[columnas_criterios].to_numpy(dtype=float)
-    num_alternativas = Aclasificar.shape[0]
     criterios = 4
 
     nombregrupo = ["Malos", "Normales", "Buenos"]
@@ -249,29 +306,13 @@ def clasificar_area(
 
     limite_1, limite_2 = dist_rel[2], dist_rel[3]
 
-    # --- C. CLASIFICACIÓN Y REGLA DE VETO ---
-    grupos, puntuaciones = [], []
-    for i in range(num_alternativas):
-        puntuacion = dist_rel[i + 4]
-
-        if puntuacion < limite_1:
-            grupo = nombregrupo[0]
-        elif puntuacion < limite_2:
-            grupo = nombregrupo[1]
-        else:
-            grupo = nombregrupo[2]
-
-        es_red_natura = alternativas.iloc[i]['en_red_natura']
-        uso_suelo = alternativas.iloc[i]['valorSuelo']
-
-        if es_red_natura and uso_suelo in (2, 3):
-            grupo = "Lugar prohibido"
-            puntuacion = 0.0
-
-        grupos.append(grupo)
-        puntuaciones.append(puntuacion)
-
-    area.loc[evaluables, 'Aptitud_Solar'] = grupos
-    area.loc[evaluables, 'Puntuacion_TOPSIS'] = puntuaciones
+    # --- C. CLASIFICACIÓN DE LAS ZONAS SIN VETO ---
+    puntuaciones = dist_rel[4:]
+    grupos = np.select(
+        [puntuaciones < limite_1, puntuaciones < limite_2], nombregrupo[:2], default=nombregrupo[2],
+    )
+    sin_veto = ~vetadas.loc[referencia].to_numpy()
+    area.loc[referencia & ~vetadas, "Aptitud_Solar"] = grupos[sin_veto]
+    area.loc[referencia & ~vetadas, "Puntuacion_TOPSIS"] = puntuaciones[sin_veto]
 
     return area

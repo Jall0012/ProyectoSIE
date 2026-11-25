@@ -18,11 +18,20 @@ La documentación interactiva está en `http://127.0.0.1:8000/docs`.
 | --- | --- | --- |
 | `GET /salud` | | Estado del servicio |
 | `POST /evaluar-zona` | JSON con `latitud`, `longitud` y `radio_m` | Categoría y puntuación TOPSIS entre 0 y 1, o «Sin datos» con puntuación nula |
+| `POST /buscar-alternativas` | JSON con `latitud`, `longitud`, `radio_m` y `alcance_km` de 1, 3 o 5 (por defecto 3) | Lista `alternativas` con hasta tres zonas |
 | `POST /analizar-imagen` | Campo multipart `archivo` con un TIFF | Categoría más probable, probabilidades de aptitud y probabilidad de veto |
 | `POST /analizar-zona-imagen` | JSON con `latitud`, `longitud` y `radio_m` entre 50 y 2000 | Resultado de IA y `recorte_tiff` con el TIFF utilizado, en base64 |
 
 El centro se indica en WGS84 y el radio en metros. El TIFF admite una banda o
 al menos tres, hasta 16 MiB y 16 millones de píxeles.
+
+La búsqueda toma las zonas de `AreasEjemplo` por su centroide. Mide la distancia
+en línea recta y descarta el solape con superficie con el círculo seleccionado.
+Cada alternativa incluye el FID como `id`, `geometria` GeoJSON en WGS84,
+`distancia_m`, `categoria`, `puntuacion`, `distancia_red_m` e `irradiacion_media`.
+La clasificación TOPSIS emplea una referencia común a las zonas de la búsqueda
+con datos suficientes y sin veto. Devuelve las zonas «Buenas» o «Normales» por
+puntuación descendente, con distancia y FID como desempates.
 
 El análisis automático necesita el [mosaico Sentinel-2 sur de la release de datos](https://github.com/Jall0012/ProyectoSIE/releases/tag/datos).
 Configura `PROYECTOSIE_SENTINEL` con la ruta local al TIFF. El servidor lee solo

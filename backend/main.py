@@ -3,14 +3,16 @@ from base64 import b64encode
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+from shapely.geometry import mapping
 
 from backend.inferencia import analizar_recorte, cargar_modelo, leer_recorte
-from backend.clasificador import CRS_PROYECTADO, cargar_capas_base, evaluar_circulo
+from backend.clasificador import CRS_PROYECTADO, buscar_zonas_cercanas, cargar_capas_base, evaluar_circulo
 from backend.recorte_satelital import ErrorFuenteSentinel, generar_recorte_satelital
 
 MAX_BYTES_TIFF = 16 * 1024 * 1024
@@ -25,6 +27,24 @@ class Zona(BaseModel):
 class ResultadoZona(BaseModel):
     categoria: str
     puntuacion: float | None
+
+
+class BusquedaCercana(Zona):
+    alcance_km: int = Field(default=3, strict=True, description="Alcance de 1, 3 o 5 km")
+
+
+class Alternativa(BaseModel):
+    id: int
+    geometria: dict[str, Any]
+    distancia_m: float
+    categoria: str
+    puntuacion: float
+    distancia_red_m: float
+    irradiacion_media: float
+
+
+class ResultadoBusqueda(BaseModel):
+    alternativas: list[Alternativa]
 
 
 class ResultadoImagen(BaseModel):
@@ -81,6 +101,26 @@ def evaluar_zona(zona: Zona, solicitud: Request) -> ResultadoZona:
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
     return ResultadoZona(categoria=categoria, puntuacion=puntuacion)
+
+
+@app.post("/buscar-alternativas")
+def buscar_alternativas(busqueda: BusquedaCercana, solicitud: Request) -> ResultadoBusqueda:
+    estado = solicitud.app.state
+    try:
+        zonas = buscar_zonas_cercanas(
+            busqueda.latitud, busqueda.longitud, busqueda.radio_m, busqueda.alcance_km,
+            estado.ruta_gpkg, estado.capas,
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    return ResultadoBusqueda(alternativas=[
+        Alternativa(
+            id=zona.id_zona, geometria=mapping(zona.geometry), distancia_m=zona.distancia_m,
+            categoria=zona.Aptitud_Solar, puntuacion=zona.Puntuacion_TOPSIS,
+            distancia_red_m=zona.dist_red_electrica_m, irradiacion_media=zona.irradiacion_media,
+        )
+        for zona in zonas.itertuples(index=False)
+    ])
 
 
 @app.post("/analizar-imagen")
