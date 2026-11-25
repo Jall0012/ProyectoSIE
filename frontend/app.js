@@ -22,7 +22,6 @@ const elementosImagen = {
   nombre: porId("nombre-archivo"),
   enviar: porId("enviar-imagen"),
   lienzo: porId("lienzo"),
-  vacio: porId("visor-vacio"),
   texto: porId("texto-visor"),
   nota: porId("nota-vista"),
   estado: porId("estado-imagen"),
@@ -47,7 +46,6 @@ function configurarPestanas() {
       elemento.tabIndex = activa ? 0 : -1;
       porId(elemento.getAttribute("aria-controls")).hidden = !activa;
     }
-    if (pestana.id === "tab-zona") requestAnimationFrame(() => mapa?.invalidateSize());
   }
 
   pestanas.forEach((pestana, indice) => {
@@ -355,7 +353,7 @@ function obtenerGeoTiff() {
 }
 
 async function generarVistaPrevia(archivo, seleccion) {
-  const { lienzo, vacio, nota } = elementosImagen;
+  const { lienzo, texto, nota } = elementosImagen;
   const geotiff = await obtenerGeoTiff();
   if (seleccion !== seleccionImagen) return;
   const tiff = await geotiff.fromBlob(archivo);
@@ -393,18 +391,18 @@ async function generarVistaPrevia(archivo, seleccion) {
   }
   contexto.putImageData(cuadro, 0, 0);
   lienzo.hidden = false;
-  vacio.hidden = true;
+  texto.hidden = true;
   nota.textContent = `${ancho} × ${alto} píxeles · Vista previa local`;
 }
 
 async function seleccionarImagen(archivo) {
-  const { texto, lienzo, vacio, enviar, nota, nombre, detalle, estado } = elementosImagen;
+  const { texto, lienzo, enviar, nota, nombre, detalle, estado } = elementosImagen;
   const seleccion = ++seleccionImagen;
   solicitudImagen?.abort();
   solicitudImagen = undefined;
   archivoActual = undefined;
   lienzo.hidden = true;
-  vacio.hidden = false;
+  texto.hidden = false;
   nota.textContent = "La vista previa se genera en el navegador.";
   nombre.hidden = true;
   enviar.disabled = true;
