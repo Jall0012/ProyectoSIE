@@ -23,7 +23,7 @@ Proyecto académico para evaluar si una zona es adecuada para instalar placas fo
 ## Reglas del proyecto
 
 - Python al estilo de las prácticas de SIE. Usa nombres descriptivos en español, pasos claros y comentarios breves donde aporten contexto. Anota el tipo de cada parámetro y retorno. En scripts ejecutables, usa `main() -> None` y `if __name__ == "__main__":`.
-- Mantén separados el análisis geográfico, el entrenamiento y la interfaz. En `master`, empieza por `clasificador.py` para la evaluación territorial o `EntrenamientoIA.py` para la CNN. En `develop`, la consulta puntual está en `backend/main.py`.
+- Mantén separados el análisis geográfico, el entrenamiento y la interfaz. En `master`, empieza por `backend/clasificador.py` para la evaluación territorial o `EntrenamientoIA.py` para la CNN. En `develop`, la consulta puntual está en `backend/main.py`.
 - Usa WGS84 (`EPSG:4326`) para la entrada GPS y `EPSG:25830` para las medidas en Jaén. Valida capas, campos y unidades. Consulta la malla de irradiación con el índice espacial. Abre los datos de origen en solo lectura y recibe sus rutas por configuración. Los archivos grandes se distribuyen por Releases (`datos` y `Modelos`).
 - Distingue la falta de cobertura de un valor cero. Compara puntuaciones TOPSIS con una referencia común. Separa entrenamiento y evaluación de la CNN por bloques geográficos. Distingue la estimación visual de la evaluación territorial.
 - Para cambios espaciales, contrasta casos con QGIS u `ogrinfo`. Incluye un punto interior, uno sin cobertura y un borde si cambia la intersección. En Codex Cloud, usa `/usr/bin/python3` si necesitas los módulos de GDAL del sistema.

@@ -5,7 +5,7 @@ guardados fuera del repositorio:
 
 ```sh
 python3.12 -m venv .venv
-.venv/bin/python -m pip install -r requirements-backend.txt
+.venv/bin/python -m pip install -r backend/requirements-backend.txt
 export PROYECTOSIE_GPKG=/workspace/ProyectoSIE-datos/CapasUsadas.gpkg
 export PROYECTOSIE_MODELO=/workspace/ProyectoSIE-datos/modelo_multitarea_solar.keras
 .venv/bin/python -m uvicorn backend.main:app

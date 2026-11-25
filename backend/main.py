@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from backend.inferencia import analizar_recorte, cargar_modelo, leer_recorte
-from clasificador import CRS_PROYECTADO, cargar_capas_base, evaluar_circulo
+from backend.clasificador import CRS_PROYECTADO, cargar_capas_base, evaluar_circulo
 
 MAX_BYTES_TIFF = 16 * 1024 * 1024
 
