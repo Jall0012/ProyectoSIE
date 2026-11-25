@@ -4,6 +4,7 @@ const porcentaje = new Intl.NumberFormat("es-ES", { style: "percent", maximumFra
 const kilometros = new Intl.NumberFormat("es-ES", { style: "unit", unit: "kilometer", maximumFractionDigits: 2 });
 const metros = new Intl.NumberFormat("es-ES", { style: "unit", unit: "meter", maximumFractionDigits: 0 });
 const centroInicial = [37.78, -3.79];
+const zonaEjemplo = { latitud: 37.80487029863771, longitud: -4.240136935519727, radio_m: 435 };
 const maxBytesTiff = 16 * 1024 * 1024;
 const maxPixelesTiff = 16_000_000;
 
@@ -57,6 +58,10 @@ function configurarInformacion() {
   const panel = porId("panel-info");
   abrir.addEventListener("click", () => panel.showModal());
   panel.addEventListener("close", () => abrir.focus({ preventScroll: true }));
+  porId("ver-ejemplo").addEventListener("click", () => {
+    panel.close();
+    seleccionarZona(zonaEjemplo);
+  });
 }
 
 function configurarPestanas() {
@@ -384,14 +389,18 @@ function limpiarAlternativas() {
   capaAlternativas?.clearLayers();
 }
 
-function seleccionarAlternativa(alternativa) {
+function seleccionarZona(zona) {
   const { latitud, longitud, radio, deslizador } = elementosZona;
-  latitud.value = alternativa.latitud;
-  longitud.value = alternativa.longitud;
-  radio.value = alternativa.radio_m;
+  latitud.value = zona.latitud;
+  longitud.value = zona.longitud;
+  radio.value = zona.radio_m;
   deslizador.value = radio.value;
   actualizarZona();
   mapa?.fitBounds(circulo.getBounds(), { padding: [30, 30], maxZoom: 16 });
+}
+
+function seleccionarAlternativa(alternativa) {
+  seleccionarZona(alternativa);
   indicarEstado(elementosAlternativas.estado, "Zona alternativa seleccionada.");
 }
 
