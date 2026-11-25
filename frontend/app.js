@@ -119,17 +119,31 @@ function crearMapa() {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
     maxNativeZoom: 18,
   });
-  let avisoTeselas = false;
-  baseGeneral.on("tileerror", () => {
-    if (avisoTeselas) return;
-    avisoTeselas = true;
-    porId("nota-mapa").textContent = "No se pudo cargar el mapa general. Puedes volver a la cartografía local en el control de capas.";
+  const baseSatelital = L.tileLayer("https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/{z}/{x}/{-y}.jpeg", {
+    attribution: 'IGN · PNOA <a href="https://www.scne.es/">CC BY 4.0 scne.es</a> · Copernicus Sentinel-2',
+    maxNativeZoom: 19,
   });
+  const notaMapa = porId("nota-mapa");
+  const indicacionesMapa = notaMapa.textContent;
+  const errorLocal = "Cartografía local no disponible. Usa los campos de coordenadas o cambia de capa.";
+  let falloCartografiaLocal = false;
+  let avisoTeselas = false;
+  for (const [capa, nombre] of [[baseGeneral, "el mapa general"], [baseSatelital, "la vista satelital"]]) {
+    capa.on("tileerror", () => {
+      if (avisoTeselas || !mapa.hasLayer(capa)) return;
+      avisoTeselas = true;
+      notaMapa.textContent = `No se pudo cargar ${nombre}. Puedes cambiar de capa o introducir las coordenadas.`;
+    });
+  }
   mapa.on("baselayerchange", (evento) => {
     avisoTeselas = false;
-    if (evento.layer === baseLocal) porId("nota-mapa").textContent = "Pulsa en el mapa o arrastra el marcador para mover el centro.";
+    notaMapa.textContent = evento.layer === baseLocal && falloCartografiaLocal ? errorLocal : indicacionesMapa;
   });
-  L.control.layers({ "Cartografía de Jaén": baseLocal, "Mapa general": baseGeneral }).addTo(mapa);
+  L.control.layers({
+    "Cartografía de Jaén": baseLocal,
+    "Mapa general": baseGeneral,
+    "Vista satelital": baseSatelital,
+  }).addTo(mapa);
 
   const estilos = {
     curvas: { color: "#64735a", weight: 0.8, opacity: 0.35 },
@@ -148,7 +162,8 @@ function crearMapa() {
     }
     circulo.bringToFront();
   }).catch(() => {
-    porId("nota-mapa").textContent = "Cartografía local no disponible. Usa los campos de coordenadas o cambia a Mapa general.";
+    falloCartografiaLocal = true;
+    if (mapa.hasLayer(baseLocal)) notaMapa.textContent = errorLocal;
   });
 
   const icono = L.divIcon({ className: "centro-mapa", iconSize: [14, 14] });
