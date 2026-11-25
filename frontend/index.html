@@ -7,9 +7,9 @@
   <meta name="description" content="Evaluación del potencial fotovoltaico de terrenos en Jaén.">
   <title>GeoSolar · Aptitud fotovoltaica en Jaén</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="./estilos.css?v=geosolar">
+  <link rel="stylesheet" href="./estilos.css?v=info-01">
   <script defer src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script defer src="./app.js?v=cerca-seleccion"></script>
+  <script defer src="./app.js?v=info-01"></script>
 </head>
 <body>
   <header class="barra">
@@ -18,7 +18,10 @@
         <span class="marca-icono" aria-hidden="true">✳</span>
         <span>Geo<span class="marca-acento">Solar</span></span>
       </a>
-      <span class="ubicacion">Jaén, Andalucía</span>
+      <div class="barra-acciones">
+        <span class="ubicacion">Jaén, Andalucía</span>
+        <button id="abrir-info" class="secundario" type="button" aria-haspopup="dialog" aria-controls="panel-info">Sobre GeoSolar</button>
+      </div>
     </div>
   </header>
 
@@ -128,5 +131,53 @@
   <footer class="contenedor pie">
     <span>Proyecto 19 · Sistemas de Información Espacial</span>
   </footer>
+
+  <dialog id="panel-info" class="panel-info" aria-labelledby="titulo-info">
+    <div class="cabecera-info">
+      <h2 id="titulo-info">Sobre GeoSolar</h2>
+      <form method="dialog">
+        <button class="secundario" autofocus>Cerrar</button>
+      </form>
+    </div>
+    <div class="contenido-info">
+      <section>
+        <h3>Qué es GeoSolar</h3>
+        <p>GeoSolar ayuda a identificar terrenos con potencial fotovoltaico en Jaén, la provincia para la que se prepararon los datos del estudio. Es el proyecto 19 de Sistemas de Información Espacial.</p>
+      </section>
+      <section>
+        <h3>Cómo funciona</h3>
+        <ul>
+          <li><strong>Evaluación territorial.</strong> Consulta las capas geográficas en el círculo seleccionado y calcula una puntuación TOPSIS.</li>
+          <li><strong>Estimación satelital.</strong> Una red neuronal estima la aptitud a partir de un recorte de Sentinel-2 o de un TIFF que subas.</li>
+          <li><strong>Buscar zonas candidatas.</strong> Muestra hasta tres alternativas con aptitud buena o normal, sin veto y dentro de la distancia elegida.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>Cómo leer los resultados</h3>
+        <ul>
+          <li><strong>Aptitud.</strong> Una puntuación TOPSIS de 0 a 1 indica cómo se sitúa el terreno según los criterios geográficos. El modo satelital muestra probabilidades para las categorías «Buenos», «Normales» y «Malos».</li>
+          <li><strong>Veto territorial.</strong> «Lugar prohibido» significa que se activa la regla de descarte de GeoSolar, que combina una intersección con Red Natura 2000 y determinados usos del suelo.</li>
+          <li><strong>Veto estimado por IA.</strong> Es la probabilidad que el modelo asigna al descarte a partir de la imagen.</li>
+          <li><strong>Sin datos.</strong> Faltan valores de uno o más criterios para calcular la evaluación territorial.</li>
+        </ul>
+        <p>Los dos modos pueden discrepar. La evaluación territorial consulta datos como la distancia a la red eléctrica. La red neuronal aprende patrones en los recortes y estima el resultado a partir de la imagen.</p>
+      </section>
+      <section>
+        <h3>Datos y metodología</h3>
+        <p>La evaluación territorial se apoya en las capas preparadas para Jaén. La estimación automática requiere que el mosaico Sentinel-2 cubra todo el círculo.</p>
+        <ul>
+          <li><a href="https://github.com/Jall0012/ProyectoSIE/releases/tag/datos">Capas de evaluación y mosaico Sentinel-2</a></li>
+          <li><a href="https://www.juntadeandalucia.es/datosabiertos/portal/dataset/datos-espaciales-de-referencia-andalucia-dera">Cartografía de referencia de Andalucía (DERA)</a></li>
+          <li><a href="https://centrodedescargas.cnig.es/CentroDescargas/limites-municipales-provinciales-autonomicos">Límites provinciales del IGN</a></li>
+          <li><a href="https://github.com/Jall0012/ProyectoSIE">Repositorio de GeoSolar</a></li>
+        </ul>
+        <details>
+          <summary>Cómo se calculan la puntuación y la estimación</summary>
+          <p>TOPSIS compara cada zona con perfiles de referencia a partir de la irradiación, el número de curvas de nivel y la distancia a carreteras y a la red eléctrica.</p>
+          <p>La red neuronal convolucional (CNN) se entrenó con pares de recortes satelitales y etiquetas generadas mediante la evaluación territorial. Estima la aptitud y el veto a partir de esos patrones.</p>
+        </details>
+      </section>
+    </div>
+  </dialog>
 </body>
 </html>

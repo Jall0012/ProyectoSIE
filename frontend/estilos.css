@@ -33,8 +33,50 @@ a { color: inherit; }
 .marca { display: inline-flex; gap: .65rem; align-items: center; text-decoration: none; font-weight: 700; letter-spacing: -.025em; }
 .marca-icono { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: .5rem; background: var(--acento); color: var(--negro-acento); font-size: 1.35rem; }
 .marca-acento { color: var(--acento); }
+.barra-acciones { display: flex; align-items: center; gap: 1rem; }
 .ubicacion { font-size: .875rem; color: var(--suave); }
 .ubicacion::before { content: ""; display: inline-block; width: .45rem; height: .45rem; border-radius: 50%; background: var(--acento); margin: 0 .5rem .11rem 0; }
+
+.panel-info {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: min(100%, 35rem);
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid var(--linea);
+  background: var(--panel);
+  color: var(--texto);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.panel-info::backdrop { background: #090c09b3; }
+.cabecera-info {
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--linea);
+  background: var(--panel);
+}
+.contenido-info { padding: 0 1.25rem 1.25rem; }
+.contenido-info section { padding-block: 1.1rem; }
+.contenido-info section + section { border-top: 1px solid var(--linea); }
+.contenido-info h3 { margin: 0 0 .45rem; font-size: 1rem; }
+.contenido-info p, .contenido-info ul { color: var(--suave); font-size: .92rem; line-height: 1.55; }
+.contenido-info ul { margin: .45rem 0; padding-left: 1.2rem; }
+.contenido-info li + li, .contenido-info p + p { margin-top: .4rem; }
+.contenido-info strong { color: var(--texto); }
+.contenido-info a, .contenido-info summary { color: var(--acento); }
+.contenido-info details { margin-top: .8rem; }
+.contenido-info summary { cursor: pointer; font-size: .92rem; }
+.contenido-info details p:first-of-type { margin-top: .45rem; }
 
 .introduccion { padding: 3.1rem 0 1.9rem; }
 h1, h2, p { margin: 0; }
@@ -126,6 +168,9 @@ input[type="range"] { width: 100%; margin: .55rem 0 .25rem; accent-color: var(--
   .introduccion { padding: 2rem 0 1.45rem; }
   .disposicion { grid-template-columns: minmax(0, 1fr); }
   #mapa { height: clamp(15rem, 38vh, 20rem); }
+}
+@media (max-width: 490px) {
+  .barra-acciones .ubicacion { display: none; }
 }
 @media (max-width: 360px) {
   .contenedor { width: calc(100% - 1.25rem); }

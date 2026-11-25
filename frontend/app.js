@@ -52,6 +52,13 @@ let recorteAutomatico = false;
 let seleccionImagen = 0;
 let cargaGeoTiff;
 
+function configurarInformacion() {
+  const abrir = porId("abrir-info");
+  const panel = porId("panel-info");
+  abrir.addEventListener("click", () => panel.showModal());
+  panel.addEventListener("close", () => abrir.focus({ preventScroll: true }));
+}
+
 function configurarPestanas() {
   const pestanas = [...document.querySelectorAll('[role="tab"]')];
   function activar(pestana) {
@@ -708,6 +715,7 @@ function configurarImagen() {
   });
 }
 
+configurarInformacion();
 configurarPestanas();
 configurarZona();
 configurarAlternativas();
