@@ -11,8 +11,9 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from shapely.geometry import mapping
 
-from backend.inferencia import analizar_recorte, cargar_modelo, leer_recorte
+# El clasificador carga SQLite y GDAL con RTree antes de que se importe TensorFlow.
 from backend.clasificador import CRS_PROYECTADO, buscar_zonas_cercanas, cargar_capas_base, evaluar_circulo
+from backend.inferencia import analizar_recorte, cargar_modelo, leer_recorte
 from backend.recorte_satelital import ErrorFuenteSentinel, generar_recorte_satelital
 
 MAX_BYTES_TIFF = 16 * 1024 * 1024

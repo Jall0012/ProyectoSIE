@@ -14,6 +14,12 @@ export PROYECTOSIE_SENTINEL=/ruta/al/mosaico_sur_COG.tif
 
 La documentación interactiva está en `http://127.0.0.1:8000/docs`.
 
+La consulta de irradiación requiere una instalación de Python con SQLite y
+soporte RTree. En Ubuntu, arranca Uvicorn directamente como en el ejemplo. El
+backend carga SQLite y GDAL antes de TensorFlow, por lo que el arranque con
+el SQLite de Ubuntu no requiere `LD_PRELOAD`. Comprueba
+`http://127.0.0.1:8000/salud` después del arranque.
+
 | Método y ruta | Entrada | Resultado |
 | --- | --- | --- |
 | `GET /salud` | | Estado del servicio |

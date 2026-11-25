@@ -4,6 +4,7 @@ from pathlib import Path
 
 import geopandas as gpd
 import numpy as np
+import pyogrio
 from pyproj import Transformer
 from shapely import from_wkb
 from shapely.errors import GEOSException
@@ -160,8 +161,8 @@ def buscar_zonas_cercanas(
     centro, circulo = zona_proyectada
     alcance_m = alcance_km * 1000
     x, y = centro.x, centro.y
-    zonas = gpd.read_file(
-        ruta_gpkg, layer="AreasEjemplo", engine="pyogrio", columns=[], fid_as_index=True,
+    zonas = pyogrio.read_dataframe(
+        ruta_gpkg, layer="AreasEjemplo", columns=[], fid_as_index=True,
         bbox=(x - alcance_m, y - alcance_m, x + alcance_m, y + alcance_m),
     )
     if zonas.crs != CRS_PROYECTADO:
